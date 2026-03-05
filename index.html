@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="utf-8">
 <title>GPS COBRADOR</title>
 
@@ -8,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
+
 body{
 font-family:Arial;
 text-align:center;
@@ -18,6 +20,7 @@ button{
 font-size:20px;
 padding:15px;
 }
+
 </style>
 
 </head>
@@ -27,6 +30,7 @@ padding:15px;
 <h2>INICIAR GPS COBRADOR</h2>
 
 <select id="nombre">
+
 <option>JEFFERSON QUIÑONEZ</option>
 <option>FAUSTO VILLARREAL</option>
 <option>MARIO CHAVEZ</option>
@@ -41,19 +45,20 @@ padding:15px;
 <option>HECTOR MOSQUERA</option>
 <option>JULIO JARA</option>
 <option>ADOLFO GONZALEZ</option>
+
 </select>
 
 <br><br>
 
-<button onclick="iniciar()">INICIAR</button>
+<button onclick="iniciar()">INICIAR RASTREO GPS</button>
 
 <script>
 
 var firebaseConfig = {
-apiKey: "TU_API",
-authDomain: "TU_PROYECTO.firebaseapp.com",
-databaseURL: "https://TU_PROYECTO.firebaseio.com",
-projectId: "TU_PROYECTO",
+apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+authDomain: "gps-cobradores.firebaseapp.com",
+databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+projectId: "gps-cobradores"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -72,7 +77,7 @@ var lon = pos.coords.longitude;
 db.ref("cobradores/"+nombre).set({
 lat:lat,
 lon:lon,
-hora:Date.now()
+hora:new Date().toLocaleTimeString()
 });
 
 });
@@ -83,50 +88,3 @@ hora:Date.now()
 
 </body>
 </html>
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-    authDomain: "gps-cobradores.firebaseapp.com",
-    databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-    projectId: "gps-cobradores",
-    storageBucket: "gps-cobradores.firebasestorage.app",
-    messagingSenderId: "918729265532",
-    appId: "1:918729265532:web:0809abc2989b98607514f9",
-    measurementId: "G-SQGEPL1042"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-<script>
-
-function iniciarGPS(nombre){
-
-navigator.geolocation.watchPosition(function(position){
-
-var lat = position.coords.latitude;
-var lng = position.coords.longitude;
-
-firebase.database().ref("cobradores/"+nombre).set({
-latitud: lat,
-longitud: lng,
-hora: new Date().toLocaleTimeString()
-});
-
-});
-
-}
-
-</script>
-<button onclick="iniciarGPS('cobrador1')">
-INICIAR RASTREO GPS
-</button>
