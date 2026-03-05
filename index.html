@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>CONTROL DE COBRADORES</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -18,10 +20,6 @@ margin-top:40px;
 background:#f5f5f5;
 }
 
-h2{
-color:#333;
-}
-
 button{
 font-size:18px;
 padding:14px 22px;
@@ -33,19 +31,9 @@ color:white;
 border-radius:6px;
 }
 
-button:hover{
-background:#145a96;
-}
-
 select{
 font-size:18px;
 padding:10px;
-}
-
-#estado{
-margin-top:20px;
-font-size:16px;
-color:#333;
 }
 
 </style>
@@ -80,18 +68,11 @@ color:#333;
 <br><br>
 
 <button onclick="iniciar()">INICIAR GPS</button>
-
 <button onclick="inicioAlmuerzo()">INICIO ALMUERZO</button>
-
 <button onclick="finAlmuerzo()">FIN ALMUERZO</button>
-
 <button onclick="finalizar()">FINALIZAR GPS</button>
 
-<div id="estado"></div>
-
 <script>
-
-/* CONFIGURACIÓN FIREBASE */
 
 var firebaseConfig = {
 
@@ -106,7 +87,7 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
-var watchID = null;
+var intervaloGPS=null;
 
 /* INICIAR GPS */
 
@@ -123,10 +104,14 @@ return;
 
 var horaInicio=new Date().toLocaleTimeString();
 
-watchID=navigator.geolocation.watchPosition(function(pos){
+intervaloGPS=setInterval(function(){
+
+navigator.geolocation.getCurrentPosition(function(pos){
 
 var lat=pos.coords.latitude;
 var lon=pos.coords.longitude;
+
+var fecha=new Date().toISOString().split('T')[0];
 
 db.ref("cobradores/"+nombre).update({
 
@@ -134,15 +119,26 @@ latitud:lat,
 longitud:lon,
 estado:"trabajando",
 hora_inicio:horaInicio,
-hora:new Date().toLocaleTimeString()
+ultima_actualizacion:Date.now()
 
 });
 
-document.getElementById("estado").innerHTML="GPS activo";
+/* GUARDAR RUTA */
+
+db.ref("rutas/"+nombre+"/"+fecha).push({
+
+latitud:lat,
+longitud:lon,
+hora:new Date().toLocaleTimeString(),
+timestamp:Date.now()
 
 });
 
-alert("JORNADA INICIADA");
+});
+
+},10000); /* CADA 10 SEGUNDOS */
+
+alert("GPS ACTIVADO");
 
 }
 
@@ -152,23 +148,14 @@ function inicioAlmuerzo(){
 
 var nombre=document.getElementById("nombre").value;
 
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
-
-var horaAlmuerzo=new Date().toLocaleTimeString();
+var hora=new Date().toLocaleTimeString();
 
 db.ref("cobradores/"+nombre).update({
 
 estado:"almuerzo",
-hora_inicio_almuerzo:horaAlmuerzo
+hora_inicio_almuerzo:hora
 
 });
-
-alert("INICIO ALMUERZO REGISTRADO");
 
 }
 
@@ -178,70 +165,50 @@ function finAlmuerzo(){
 
 var nombre=document.getElementById("nombre").value;
 
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
-
-var horaFinAlmuerzo=new Date().toLocaleTimeString();
+var hora=new Date().toLocaleTimeString();
 
 db.ref("cobradores/"+nombre).update({
 
 estado:"trabajando",
-hora_fin_almuerzo:horaFinAlmuerzo
+hora_fin_almuerzo:hora
 
 });
 
-alert("FIN ALMUERZO REGISTRADO");
-
 }
 
-/* FINALIZAR GPS */
+/* FINALIZAR */
 
 function finalizar(){
 
 var nombre=document.getElementById("nombre").value;
 
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
+clearInterval(intervaloGPS);
 
 navigator.geolocation.getCurrentPosition(function(pos){
 
 var lat=pos.coords.latitude;
 var lon=pos.coords.longitude;
 
-var horaFin=new Date().toLocaleTimeString();
+var hora=new Date().toLocaleTimeString();
 
 db.ref("cobradores/"+nombre).update({
 
 latitud:lat,
 longitud:lon,
 estado:"finalizado",
-hora_fin_ruta:horaFin
+hora_fin_ruta:hora,
+ultima_actualizacion:Date.now()
 
 });
 
-if(watchID!==null){
-
-navigator.geolocation.clearWatch(watchID);
-
-}
-
-document.getElementById("estado").innerHTML="Jornada finalizada";
+});
 
 alert("JORNADA FINALIZADA");
-
-});
 
 }
 
 </script>
 
 </body>
+
 </html>
