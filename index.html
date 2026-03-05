@@ -106,6 +106,8 @@ var db = firebase.database();
 
 var watchID = null;
 
+/* INICIAR GPS */
+
 function iniciar(){
 
 var nombre = document.getElementById("nombre").value;
@@ -118,17 +120,7 @@ return;
 
 }
 
-if(!navigator.geolocation){
-
-alert("GPS no disponible");
-
-return;
-
-}
-
-watchID = navigator.geolocation.watchPosition(
-
-function(pos){
+watchID = navigator.geolocation.watchPosition(function(pos){
 
 var lat = pos.coords.latitude;
 var lon = pos.coords.longitude;
@@ -137,35 +129,20 @@ db.ref("cobradores/"+nombre).set({
 
 latitud: lat,
 longitud: lon,
-estado: "trabajando",
-hora: new Date().toLocaleTimeString(),
-ultima_actualizacion: Date.now()
+estado:"trabajando",
+hora:new Date().toLocaleTimeString()
 
 });
 
-document.getElementById("estado").innerHTML = "GPS activo enviando ubicación";
+document.getElementById("estado").innerHTML="GPS activo";
 
-},
-
-function(error){
-
-alert("No se pudo obtener GPS");
-
-},
-
-{
-
-enableHighAccuracy:true,
-maximumAge:10000,
-timeout:5000
-
-}
-
-);
+});
 
 alert("GPS ACTIVADO");
 
 }
+
+/* INICIO ALMUERZO */
 
 function inicioAlmuerzo(){
 
@@ -181,11 +158,11 @@ return;
 
 db.ref("cobradores/"+nombre+"/estado").set("almuerzo");
 
-db.ref("cobradores/"+nombre+"/hora_almuerzo_inicio").set(new Date().toLocaleTimeString());
-
 alert("INICIO DE ALMUERZO REGISTRADO");
 
 }
+
+/* FIN ALMUERZO */
 
 function finAlmuerzo(){
 
@@ -201,11 +178,11 @@ return;
 
 db.ref("cobradores/"+nombre+"/estado").set("trabajando");
 
-db.ref("cobradores/"+nombre+"/hora_almuerzo_fin").set(new Date().toLocaleTimeString());
-
 alert("FIN DE ALMUERZO REGISTRADO");
 
 }
+
+/* FINALIZAR GPS */
 
 function finalizar(){
 
@@ -230,8 +207,7 @@ latitud: lat,
 longitud: lon,
 estado: "finalizado",
 hora: new Date().toLocaleTimeString(),
-hora_fin: new Date().toLocaleTimeString(),
-ultima_actualizacion: Date.now()
+hora_fin: new Date().toLocaleTimeString()
 
 });
 
