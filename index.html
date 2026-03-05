@@ -91,6 +91,8 @@ color:#333;
 
 <script>
 
+/* CONFIGURACIÓN FIREBASE */
+
 var firebaseConfig = {
 
 apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
@@ -110,26 +112,28 @@ var watchID = null;
 
 function iniciar(){
 
-var nombre = document.getElementById("nombre").value;
+var nombre=document.getElementById("nombre").value;
 
 if(!nombre){
 
 alert("Seleccione su nombre");
-
 return;
 
 }
 
-watchID = navigator.geolocation.watchPosition(function(pos){
+var horaInicio=new Date().toLocaleTimeString();
 
-var lat = pos.coords.latitude;
-var lon = pos.coords.longitude;
+watchID=navigator.geolocation.watchPosition(function(pos){
 
-db.ref("cobradores/"+nombre).set({
+var lat=pos.coords.latitude;
+var lon=pos.coords.longitude;
 
-latitud: lat,
-longitud: lon,
+db.ref("cobradores/"+nombre).update({
+
+latitud:lat,
+longitud:lon,
 estado:"trabajando",
+hora_inicio:horaInicio,
 hora:new Date().toLocaleTimeString()
 
 });
@@ -138,7 +142,7 @@ document.getElementById("estado").innerHTML="GPS activo";
 
 });
 
-alert("GPS ACTIVADO");
+alert("JORNADA INICIADA");
 
 }
 
@@ -146,19 +150,25 @@ alert("GPS ACTIVADO");
 
 function inicioAlmuerzo(){
 
-var nombre = document.getElementById("nombre").value;
+var nombre=document.getElementById("nombre").value;
 
 if(!nombre){
 
 alert("Seleccione su nombre");
-
 return;
 
 }
 
-db.ref("cobradores/"+nombre+"/estado").set("almuerzo");
+var horaAlmuerzo=new Date().toLocaleTimeString();
 
-alert("INICIO DE ALMUERZO REGISTRADO");
+db.ref("cobradores/"+nombre).update({
+
+estado:"almuerzo",
+hora_inicio_almuerzo:horaAlmuerzo
+
+});
+
+alert("INICIO ALMUERZO REGISTRADO");
 
 }
 
@@ -166,19 +176,25 @@ alert("INICIO DE ALMUERZO REGISTRADO");
 
 function finAlmuerzo(){
 
-var nombre = document.getElementById("nombre").value;
+var nombre=document.getElementById("nombre").value;
 
 if(!nombre){
 
 alert("Seleccione su nombre");
-
 return;
 
 }
 
-db.ref("cobradores/"+nombre+"/estado").set("trabajando");
+var horaFinAlmuerzo=new Date().toLocaleTimeString();
 
-alert("FIN DE ALMUERZO REGISTRADO");
+db.ref("cobradores/"+nombre).update({
+
+estado:"trabajando",
+hora_fin_almuerzo:horaFinAlmuerzo
+
+});
+
+alert("FIN ALMUERZO REGISTRADO");
 
 }
 
@@ -186,38 +202,38 @@ alert("FIN DE ALMUERZO REGISTRADO");
 
 function finalizar(){
 
-var nombre = document.getElementById("nombre").value;
+var nombre=document.getElementById("nombre").value;
 
 if(!nombre){
 
 alert("Seleccione su nombre");
-
 return;
 
 }
 
 navigator.geolocation.getCurrentPosition(function(pos){
 
-var lat = pos.coords.latitude;
-var lon = pos.coords.longitude;
+var lat=pos.coords.latitude;
+var lon=pos.coords.longitude;
 
-db.ref("cobradores/"+nombre).set({
+var horaFin=new Date().toLocaleTimeString();
 
-latitud: lat,
-longitud: lon,
-estado: "finalizado",
-hora: new Date().toLocaleTimeString(),
-hora_fin: new Date().toLocaleTimeString()
+db.ref("cobradores/"+nombre).update({
+
+latitud:lat,
+longitud:lon,
+estado:"finalizado",
+hora_fin_ruta:horaFin
 
 });
 
-if(watchID !== null){
+if(watchID!==null){
 
 navigator.geolocation.clearWatch(watchID);
 
 }
 
-document.getElementById("estado").innerHTML = "Jornada finalizada";
+document.getElementById("estado").innerHTML="Jornada finalizada";
 
 alert("JORNADA FINALIZADA");
 
