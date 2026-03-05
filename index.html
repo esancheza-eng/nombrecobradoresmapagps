@@ -107,3 +107,26 @@ hora:Date.now()
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
 </script>
+<script>
+
+function iniciarGPS(nombre){
+
+navigator.geolocation.watchPosition(function(position){
+
+var lat = position.coords.latitude;
+var lng = position.coords.longitude;
+
+firebase.database().ref("cobradores/"+nombre).set({
+latitud: lat,
+longitud: lng,
+hora: new Date().toLocaleTimeString()
+});
+
+});
+
+}
+
+</script>
+<button onclick="iniciarGPS('cobrador1')">
+INICIAR RASTREO GPS
+</button>
