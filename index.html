@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CONTROL DE COBRADORES</title>
+<title>Supervisor GPS Cobradores</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -12,40 +15,52 @@
 <style>
 
 body{
+margin:0;
 font-family:Arial;
-text-align:center;
-margin-top:40px;
-background:#f5f5f5;
+display:flex;
+height:100vh;
 }
 
-h2{
-color:#333;
-}
-
-button{
-font-size:18px;
-padding:14px 22px;
-margin:10px;
-cursor:pointer;
-border:none;
-background:#1e73be;
+#panel{
+width:350px;
+background:#0f172a;
 color:white;
-border-radius:6px;
+overflow:auto;
+padding:15px;
 }
 
-button:hover{
-background:#145a96;
+#map{
+flex:1;
 }
 
-select{
-font-size:18px;
-padding:10px;
+.card{
+
+background:#1e293b;
+padding:12px;
+margin-bottom:10px;
+border-radius:8px;
+cursor:pointer;
+border-left:5px solid #22c55e;
+
 }
 
-#estado{
-margin-top:20px;
+.card.almuerzo{
+border-left:5px solid orange;
+}
+
+.card.finalizado{
+border-left:5px solid red;
+}
+
+.nombre{
+font-weight:bold;
 font-size:16px;
-color:#333;
+margin-bottom:5px;
+}
+
+.detalle{
+font-size:13px;
+line-height:1.4;
 }
 
 </style>
@@ -54,44 +69,17 @@ color:#333;
 
 <body>
 
-<h2>CONTROL DE COBRADORES</h2>
+<div id="panel">
 
-<select id="nombre">
+<h2>COBRADORES</h2>
 
-<option value="" selected disabled>Seleccione cobrador</option>
+<div id="lista"></div>
 
-<option>JEFFERSON QUIÑONEZ</option>
-<option>FAUSTO VILLARREAL</option>
-<option>MARIO CHAVEZ</option>
-<option>VICTOR MENDOZA</option>
-<option>GUILLERMO MONTAÑO</option>
-<option>RAFAEL MILLAN</option>
-<option>JOSE OLAYA</option>
-<option>GABRIEL MORAN</option>
-<option>BYRON AGUILAR</option>
-<option>CELIO ORTEGA</option>
-<option>FRANKLIN CARRANZA</option>
-<option>HECTOR MOSQUERA</option>
-<option>JULIO JARA</option>
-<option>ADOLFO GONZALEZ</option>
+</div>
 
-</select>
-
-<br><br>
-
-<button onclick="iniciar()">INICIAR GPS</button>
-
-<button onclick="inicioAlmuerzo()">INICIO ALMUERZO</button>
-
-<button onclick="finAlmuerzo()">FIN ALMUERZO</button>
-
-<button onclick="finalizar()">FINALIZAR GPS</button>
-
-<div id="estado"></div>
+<div id="map"></div>
 
 <script>
-
-/* CONFIGURACIÓN FIREBASE */
 
 var firebaseConfig = {
 
@@ -106,142 +94,114 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
-var watchID = null;
+var map = L.map('map').setView([-2.17,-79.90],13);
 
-/* INICIAR GPS */
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
 
-function iniciar(){
+var marcadores={};
 
-var nombre=document.getElementById("nombre").value;
+db.ref("cobradores").on("value",function(snapshot){
 
-if(!nombre){
+var datos=snapshot.val();
 
-alert("Seleccione su nombre");
-return;
+var lista=document.getElementById("lista");
+
+lista.innerHTML="";
+
+for(var nombre in datos){
+
+var d=datos[nombre];
+
+var estado=d.estado || "-";
+
+var lat=d.latitud;
+var lon=d.longitud;
+
+var inicio=d.hora_inicio || "-";
+var inicioAlmuerzo=d.hora_inicio_almuerzo || "-";
+var finAlmuerzo=d.hora_fin_almuerzo || "-";
+var finRuta=d.hora_fin_ruta || "-";
+
+var clase="card";
+
+if(estado=="almuerzo") clase="card almuerzo";
+
+if(estado=="finalizado") clase="card finalizado";
+
+var div=document.createElement("div");
+
+div.className=clase;
+
+div.innerHTML=
+
+'<div class="nombre">'+nombre+'</div>'+
+
+'<div class="detalle">'+
+
+'Estado: '+estado+'<br>'+
+
+'Inicio: '+inicio+'<br>'+
+
+'Inicio Almuerzo: '+inicioAlmuerzo+'<br>'+
+
+'Fin Almuerzo: '+finAlmuerzo+'<br>'+
+
+'Fin Ruta: '+finRuta+
+
+'</div>';
+
+lista.appendChild(div);
+
+if(lat && lon){
+
+if(!marcadores[nombre]){
+
+marcadores[nombre]=L.marker([lat,lon]).addTo(map);
 
 }
 
-var horaInicio=new Date().toLocaleTimeString();
+else{
 
-watchID=navigator.geolocation.watchPosition(function(pos){
+marcadores[nombre].setLatLng([lat,lon]);
 
-var lat=pos.coords.latitude;
-var lon=pos.coords.longitude;
+}
 
-db.ref("cobradores/"+nombre).update({
+marcadores[nombre].bindPopup(
 
-latitud:lat,
-longitud:lon,
-estado:"trabajando",
-hora_inicio:horaInicio,
-hora:new Date().toLocaleTimeString()
+"<b>"+nombre+"</b><br>"+
+
+"Estado: "+estado+"<br>"+
+
+"Inicio: "+inicio+"<br>"+
+
+"Inicio Almuerzo: "+inicioAlmuerzo+"<br>"+
+
+"Fin Almuerzo: "+finAlmuerzo+"<br>"+
+
+"Fin Ruta: "+finRuta
+
+);
+
+div.onclick=function(lat,lon){
+
+return function(){
+
+map.setView([lat,lon],17);
+
+}
+
+}(lat,lon);
+
+}
+
+}
 
 });
-
-document.getElementById("estado").innerHTML="GPS activo";
-
-});
-
-alert("JORNADA INICIADA");
-
-}
-
-/* INICIO ALMUERZO */
-
-function inicioAlmuerzo(){
-
-var nombre=document.getElementById("nombre").value;
-
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
-
-var horaAlmuerzo=new Date().toLocaleTimeString();
-
-db.ref("cobradores/"+nombre).update({
-
-estado:"almuerzo",
-hora_inicio_almuerzo:horaAlmuerzo
-
-});
-
-alert("INICIO ALMUERZO REGISTRADO");
-
-}
-
-/* FIN ALMUERZO */
-
-function finAlmuerzo(){
-
-var nombre=document.getElementById("nombre").value;
-
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
-
-var horaFinAlmuerzo=new Date().toLocaleTimeString();
-
-db.ref("cobradores/"+nombre).update({
-
-estado:"trabajando",
-hora_fin_almuerzo:horaFinAlmuerzo
-
-});
-
-alert("FIN ALMUERZO REGISTRADO");
-
-}
-
-/* FINALIZAR GPS */
-
-function finalizar(){
-
-var nombre=document.getElementById("nombre").value;
-
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
-
-navigator.geolocation.getCurrentPosition(function(pos){
-
-var lat=pos.coords.latitude;
-var lon=pos.coords.longitude;
-
-var horaFin=new Date().toLocaleTimeString();
-
-db.ref("cobradores/"+nombre).update({
-
-latitud:lat,
-longitud:lon,
-estado:"finalizado",
-hora_fin_ruta:horaFin
-
-});
-
-if(watchID!==null){
-
-navigator.geolocation.clearWatch(watchID);
-
-}
-
-document.getElementById("estado").innerHTML="Jornada finalizada";
-
-alert("JORNADA FINALIZADA");
-
-});
-
-}
 
 </script>
 
 </body>
+
 </html>
