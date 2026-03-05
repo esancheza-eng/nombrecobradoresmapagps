@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GPS COBRADOR</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+body{
+font-family:Arial;
+text-align:center;
+margin-top:40px;
+}
+
+button{
+font-size:20px;
+padding:15px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>INICIAR GPS COBRADOR</h2>
+
+<select id="nombre">
+<option>JEFFERSON QUIÑONEZ</option>
+<option>FAUSTO VILLARREAL</option>
+<option>MARIO CHAVEZ</option>
+<option>VICTOR MENDOZA</option>
+<option>GUILLERMO MONTAÑO</option>
+<option>RAFAEL MILLAN</option>
+<option>JOSE OLAYA</option>
+<option>GABRIEL MORAN</option>
+<option>BYRON AGUILAR</option>
+<option>CELIO ORTEGA</option>
+<option>FRANKLIN CARRANZA</option>
+<option>HECTOR MOSQUERA</option>
+<option>JULIO JARA</option>
+<option>ADOLFO GONZALEZ</option>
+</select>
+
+<br><br>
+
+<button onclick="iniciar()">INICIAR</button>
+
+<script>
+
+var firebaseConfig = {
+apiKey: "TU_API",
+authDomain: "TU_PROYECTO.firebaseapp.com",
+databaseURL: "https://TU_PROYECTO.firebaseio.com",
+projectId: "TU_PROYECTO",
+};
+
+firebase.initializeApp(firebaseConfig);
+
+var db = firebase.database();
+
+function iniciar(){
+
+var nombre = document.getElementById("nombre").value;
+
+navigator.geolocation.watchPosition(function(pos){
+
+var lat = pos.coords.latitude;
+var lon = pos.coords.longitude;
+
+db.ref("cobradores/"+nombre).set({
+lat:lat,
+lon:lon,
+hora:Date.now()
+});
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
