@@ -14,6 +14,7 @@ body{
 font-family:Arial;
 text-align:center;
 margin-top:40px;
+background:#f5f5f5;
 }
 
 button{
@@ -21,11 +22,23 @@ font-size:18px;
 padding:12px;
 margin:8px;
 cursor:pointer;
+border:none;
+background:#1e73be;
+color:white;
+border-radius:6px;
+}
+
+button:hover{
+background:#125a96;
 }
 
 select{
 font-size:18px;
 padding:8px;
+}
+
+h2{
+color:#333;
 }
 
 </style>
@@ -65,6 +78,8 @@ padding:8px;
 
 <button onclick="finalizar()">FINALIZAR GPS</button>
 
+<p id="estado"></p>
+
 <script>
 
 var firebaseConfig = {
@@ -84,19 +99,51 @@ function iniciar(){
 
 var nombre = document.getElementById("nombre").value;
 
-watchID = navigator.geolocation.watchPosition(function(pos){
+if(!navigator.geolocation){
+
+alert("El GPS no está disponible en este dispositivo");
+
+return;
+
+}
+
+watchID = navigator.geolocation.watchPosition(
+
+function(pos){
 
 var lat = pos.coords.latitude;
 var lon = pos.coords.longitude;
 
 db.ref("cobradores/"+nombre).set({
+
 latitud: lat,
 longitud: lon,
-estado:"trabajando",
-hora:new Date().toLocaleTimeString()
-});
+estado: "trabajando",
+hora: new Date().toLocaleTimeString(),
+ultima_actualizacion: Date.now()
 
 });
+
+document.getElementById("estado").innerHTML =
+"GPS activo - ubicación enviada";
+
+},
+
+function(error){
+
+alert("Error obteniendo GPS");
+
+},
+
+{
+
+enableHighAccuracy:true,
+maximumAge:10000,
+timeout:5000
+
+}
+
+);
 
 alert("GPS ACTIVADO");
 
@@ -140,6 +187,9 @@ db.ref("cobradores/"+nombre+"/estado").set("finalizado");
 
 db.ref("cobradores/"+nombre+"/hora_fin").set(new Date().toLocaleTimeString());
 
+document.getElementById("estado").innerHTML =
+"Jornada finalizada";
+
 alert("JORNADA FINALIZADA");
 
 }
@@ -147,4 +197,5 @@ alert("JORNADA FINALIZADA");
 </script>
 
 </body>
+
 </html>
