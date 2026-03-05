@@ -17,8 +17,15 @@ margin-top:40px;
 }
 
 button{
-font-size:20px;
-padding:15px;
+font-size:18px;
+padding:12px;
+margin:8px;
+cursor:pointer;
+}
+
+select{
+font-size:18px;
+padding:8px;
 }
 
 </style>
@@ -27,7 +34,7 @@ padding:15px;
 
 <body>
 
-<h2>INICIAR GPS COBRADOR</h2>
+<h2>CONTROL DE COBRADORES</h2>
 
 <select id="nombre">
 
@@ -50,7 +57,13 @@ padding:15px;
 
 <br><br>
 
-<button onclick="iniciar()">INICIAR RASTREO GPS</button>
+<button onclick="iniciar()">INICIAR GPS</button>
+
+<button onclick="inicioAlmuerzo()">INICIO ALMUERZO</button>
+
+<button onclick="finAlmuerzo()">FIN ALMUERZO</button>
+
+<button onclick="finalizar()">FINALIZAR GPS</button>
 
 <script>
 
@@ -65,32 +78,73 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
-<script>
-
-var firebaseConfig = {
-...
-};
-
-firebase.initializeApp(firebaseConfig);
-
-var db = firebase.database();
+var watchID = null;
 
 function iniciar(){
 
 var nombre = document.getElementById("nombre").value;
 
-navigator.geolocation.watchPosition(function(pos){
+watchID = navigator.geolocation.watchPosition(function(pos){
 
 var lat = pos.coords.latitude;
 var lon = pos.coords.longitude;
 
 db.ref("cobradores/"+nombre).set({
-lat:lat,
-lon:lon,
-hora:Date.now()
+latitud: lat,
+longitud: lon,
+estado:"trabajando",
+hora:new Date().toLocaleTimeString()
 });
 
 });
+
+alert("GPS ACTIVADO");
 
 }
+
+function inicioAlmuerzo(){
+
+var nombre = document.getElementById("nombre").value;
+
+db.ref("cobradores/"+nombre+"/estado").set("almuerzo");
+
+db.ref("cobradores/"+nombre+"/hora_almuerzo_inicio").set(new Date().toLocaleTimeString());
+
+alert("INICIO DE ALMUERZO REGISTRADO");
+
+}
+
+function finAlmuerzo(){
+
+var nombre = document.getElementById("nombre").value;
+
+db.ref("cobradores/"+nombre+"/estado").set("trabajando");
+
+db.ref("cobradores/"+nombre+"/hora_almuerzo_fin").set(new Date().toLocaleTimeString());
+
+alert("FIN DE ALMUERZO REGISTRADO");
+
+}
+
+function finalizar(){
+
+var nombre = document.getElementById("nombre").value;
+
+if(watchID !== null){
+
+navigator.geolocation.clearWatch(watchID);
+
+}
+
+db.ref("cobradores/"+nombre+"/estado").set("finalizado");
+
+db.ref("cobradores/"+nombre+"/hora_fin").set(new Date().toLocaleTimeString());
+
+alert("JORNADA FINALIZADA");
+
+}
+
 </script>
+
+</body>
+</html>
