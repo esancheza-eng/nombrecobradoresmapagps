@@ -65,6 +65,16 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
+<script>
+
+var firebaseConfig = {
+...
+};
+
+firebase.initializeApp(firebaseConfig);
+
+var db = firebase.database();
+
 function iniciar(){
 
 var nombre = document.getElementById("nombre").value;
@@ -77,14 +87,10 @@ var lon = pos.coords.longitude;
 db.ref("cobradores/"+nombre).set({
 lat:lat,
 lon:lon,
-hora:new Date().toLocaleTimeString()
+hora:Date.now()
 });
 
 });
 
 }
-
 </script>
-
-</body>
-</html>
