@@ -1,214 +1,699 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GPS Cobradores">
+  <meta name="theme-color" content="#080d18">
+  <title>GPS Cobradores</title>
 
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Manifest inline via blob (PWA installable) -->
+  <script>
+    var manifest = {
+      name: "GPS Cobradores",
+      short_name: "GPS Cob",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#080d18",
+      theme_color: "#080d18",
+      icons: [{
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23080d18'/%3E%3Ccircle cx='96' cy='96' r='30' fill='%2300c6ff'/%3E%3Ccircle cx='96' cy='96' r='55' fill='none' stroke='%2300c6ff' stroke-width='8' opacity='.4'/%3E%3Cline x1='96' y1='20' x2='96' y2='46' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='96' y1='146' x2='96' y2='172' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='20' y1='96' x2='46' y2='96' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='146' y1='96' x2='172' y2='96' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      }]
+    };
+    var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    var link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+  </script>
 
-<title>CONTROL DE COBRADORES</title>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <!-- Google Fonts con fallback offline -->
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-<style>
+  <style>
+    /* Fuente fallback si no hay internet */
+    @font-face {
+      font-family: 'Rajdhani';
+      font-weight: 700;
+      src: local('Arial Black'), local('Impact');
+    }
 
-body{
-font-family:Arial;
-text-align:center;
-margin-top:40px;
-background:#f5f5f5;
-}
+    :root {
+      --bg:     #080d18;
+      --panel:  #0f1928;
+      --border: #1e3a5f;
+      --accent: #00c6ff;
+      --green:  #00e676;
+      --orange: #ff9100;
+      --red:    #ff1744;
+      --yellow: #ffd600;
+      --text:   #e8f0ff;
+      --muted:  #4a6080;
+    }
 
-button{
-font-size:18px;
-padding:14px 22px;
-margin:10px;
-cursor:pointer;
-border:none;
-background:#1e73be;
-color:white;
-border-radius:6px;
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; overflow-x: hidden; }
 
-select{
-font-size:18px;
-padding:10px;
-}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', 'Arial Black', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 14px 40px;
+      background-image:
+        radial-gradient(ellipse at 15% 10%, rgba(0,114,255,0.1) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 85%, rgba(0,198,255,0.07) 0%, transparent 50%);
+    }
 
-</style>
+    /* ── OFFLINE BANNER ── */
+    #offline-banner {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      background: rgba(255,145,0,0.15);
+      border: 1px solid rgba(255,145,0,0.4);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--orange);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    #offline-banner.show { display: block; }
 
+    /* ── HEADER ── */
+    .header { width: 100%; max-width: 500px; text-align: center; margin-bottom: 18px; }
+    .badge {
+      display: inline-block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 4px;
+      color: var(--accent);
+      background: rgba(0,198,255,0.08);
+      border: 1px solid rgba(0,198,255,0.25);
+      border-radius: 4px; padding: 4px 12px; margin-bottom: 10px;
+    }
+    .header h1 {
+      font-size: 26px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase; line-height: 1.15;
+      background: linear-gradient(135deg, #e8f0ff 0%, #00c6ff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .clock {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; color: var(--muted); letter-spacing: 2px; margin-top: 6px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      width: 100%; max-width: 500px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 18px; padding: 22px 18px 24px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.55);
+      overflow: visible;
+    }
+
+    .field-label {
+      font-size: 10px; letter-spacing: 3px; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+
+    /* ── DROPDOWN ── */
+    .custom-select-wrap { position: relative; width: 100%; user-select: none; z-index: 200; }
+
+    .custom-select-btn {
+      width: 100%; padding: 16px 18px;
+      font-family: 'Rajdhani', 'Arial Black', sans-serif;
+      font-size: 18px; font-weight: 700; letter-spacing: 1px;
+      color: var(--text); background: rgba(0,198,255,0.05);
+      border: 1px solid var(--border); border-radius: 10px;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      text-align: left; min-height: 58px;
+    }
+    .custom-select-btn.open {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,198,255,0.15);
+    }
+    .placeholder { color: var(--muted); font-size: 15px; }
+    .arrow { width: 14px; height: 14px; flex-shrink: 0; transition: transform 0.25s; }
+    .custom-select-btn.open .arrow { transform: rotate(180deg); }
+
+    .custom-dropdown {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: #0a1525; border: 1px solid var(--accent);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.85);
+      z-index: 9999; display: none;
+    }
+    .custom-dropdown.open { display: block; animation: dropIn 0.2s ease; }
+
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-item {
+      padding: 16px 20px;
+      font-family: 'Rajdhani', 'Arial Black', sans-serif;
+      font-size: 17px; font-weight: 600; letter-spacing: 1px;
+      color: #8ab4d8; cursor: pointer;
+      border-bottom: 1px solid rgba(30,58,95,0.5);
+      display: flex; align-items: center; gap: 12px; min-height: 54px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:active { background: rgba(0,198,255,0.15); color: #fff; }
+    .dropdown-item.selected { background: rgba(0,198,255,0.1); color: var(--accent); }
+    .d-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0; opacity: 0.4;
+    }
+    .dropdown-item.selected .d-dot { opacity: 1; box-shadow: 0 0 6px var(--accent); }
+
+    /* ── DIVIDER ── */
+    .divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 18px; }
+    .divider span { font-size: 10px; letter-spacing: 3px; color: var(--muted); white-space: nowrap; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── BUTTONS ── */
+    .btn-group { display: flex; flex-direction: column; gap: 12px; }
+    .btn-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    button {
+      position: relative; display: flex; align-items: center;
+      justify-content: center; gap: 10px; padding: 0 16px; height: 64px;
+      font-family: 'Rajdhani', 'Arial Black', sans-serif;
+      font-size: 17px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; border: none; border-radius: 12px;
+      cursor: pointer; transition: transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; line-height: 1.2; text-align: center;
+    }
+    button:active { transform: scale(0.94); }
+    .icon { width: 22px; height: 22px; flex-shrink: 0; }
+
+    .btn-start {
+      background: linear-gradient(135deg, #007a38, #00e676); color: #001f0e;
+      box-shadow: 0 6px 24px rgba(0,230,118,0.38); font-size: 20px; height: 72px;
+    }
+    .btn-lunch-start {
+      background: linear-gradient(135deg, #a04000, #ff9100); color: #200e00;
+      box-shadow: 0 6px 24px rgba(255,145,0,0.35);
+    }
+    .btn-lunch-end {
+      background: linear-gradient(135deg, #907000, #ffd600); color: #1a1200;
+      box-shadow: 0 6px 24px rgba(255,214,0,0.3);
+    }
+    .btn-stop {
+      background: linear-gradient(135deg, #880015, #ff1744); color: #fff;
+      box-shadow: 0 6px 24px rgba(255,23,68,0.35); font-size: 20px; height: 72px;
+    }
+
+    /* ── STATUS ── */
+    .status-bar {
+      margin-top: 20px; background: rgba(0,0,0,0.3);
+      border: 2px solid var(--border); border-radius: 12px;
+      padding: 16px 18px; display: flex; align-items: center;
+      gap: 14px; min-height: 72px;
+      transition: border-color 0.4s, background 0.4s;
+    }
+    .status-bar.s-trabajando { border-color: rgba(0,230,118,0.5); background: rgba(0,230,118,0.06); }
+    .status-bar.s-almorzando { border-color: rgba(255,145,0,0.5);  background: rgba(255,145,0,0.06); }
+    .status-bar.s-finalizado { border-color: rgba(255,23,68,0.5);  background: rgba(255,23,68,0.06); }
+
+    .status-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--muted); flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .status-dot.active { background: var(--green);  box-shadow: 0 0 12px var(--green);  animation: pulse 1.4s infinite; }
+    .status-dot.lunch  { background: var(--orange); box-shadow: 0 0 12px var(--orange); animation: pulse 1.4s infinite; }
+    .status-dot.done   { background: var(--red);    box-shadow: 0 0 12px var(--red); }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.3; transform:scale(0.75); }
+    }
+
+    .status-body { flex: 1; }
+    .status-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .status-value { font-size: 26px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; transition: color 0.3s; }
+    .status-value.c-trabajando { color: var(--green); }
+    .status-value.c-almorzando { color: var(--orange); }
+    .status-value.c-finalizado { color: var(--red); }
+    .status-value.c-espera     { color: var(--muted); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
+      z-index: 1000; display: flex; align-items: center;
+      justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #0f1928; border: 1px solid var(--border); border-radius: 18px;
+      padding: 30px 22px 24px; width: 100%; max-width: 360px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.85);
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      text-align: center;
+    }
+    .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
+    .modal-icon   { font-size: 48px; margin-bottom: 14px; }
+    .modal-title  { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+    .modal-action { font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .modal-name   { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: var(--accent); margin-bottom: 28px; letter-spacing: 1px; }
+    .modal-btns   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-cancel {
+      height: 56px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase; background: transparent;
+      border: 1px solid var(--border); border-radius: 10px; color: var(--muted); cursor: pointer;
+    }
+    .modal-cancel:active { background: rgba(255,255,255,0.05); color: var(--text); }
+    .modal-confirm {
+      height: 56px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase; border: none; border-radius: 10px;
+      cursor: pointer; color: white;
+    }
+    .modal-confirm:active { opacity: 0.8; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #0f1928; border: 1px solid var(--accent); border-radius: 12px;
+      padding: 14px 26px; font-family: 'Rajdhani', sans-serif;
+      font-size: 17px; font-weight: 700; letter-spacing: 1px; color: var(--accent);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
+      opacity: 0; z-index: 9999; pointer-events: none;
+      white-space: nowrap; max-width: 90vw; text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── COLA OFFLINE ── */
+    #cola-info {
+      display: none;
+      width: 100%; max-width: 500px;
+      background: rgba(0,198,255,0.06);
+      border: 1px solid rgba(0,198,255,0.2);
+      border-radius: 8px; padding: 10px 16px;
+      font-size: 12px; font-weight: 600; letter-spacing: 1px;
+      color: var(--accent); text-align: center; margin-top: 12px;
+    }
+    #cola-info.show { display: block; }
+  </style>
 </head>
-
 <body>
 
-<h2>CONTROL DE COBRADORES</h2>
-
-<select id="nombre">
-
-<option value="" selected disabled>Seleccione cobrador</option>
-
-<option>JEFFERSON QUIÑONEZ</option>
-<option>FAUSTO VILLARREAL</option>
-<option>MARIO CHAVEZ</option>
-<option>VICTOR MENDOZA</option>
-<option>GUILLERMO MONTAÑO</option>
-<option>RAFAEL MILLAN</option>
-<option>JOSE OLAYA</option>
-<option>GABRIEL MORAN</option>
-<option>BYRON AGUILAR</option>
-<option>CELIO ORTEGA</option>
-<option>FRANKLIN CARRANZA</option>
-<option>HECTOR MOSQUERA</option>
-<option>JULIO JARA</option>
-<option>ADOLFO GONZALEZ</option>
-
-</select>
-
-<br><br>
-
-<button onclick="iniciar()">INICIAR GPS</button>
-<button onclick="inicioAlmuerzo()">INICIO ALMUERZO</button>
-<button onclick="finAlmuerzo()">FIN ALMUERZO</button>
-<button onclick="finalizar()">FINALIZAR GPS</button>
-
-<script>
-
-var firebaseConfig = {
-
-apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-authDomain: "gps-cobradores.firebaseapp.com",
-databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-projectId: "gps-cobradores"
-
-};
-
-firebase.initializeApp(firebaseConfig);
-
-var db = firebase.database();
-
-var intervaloGPS=null;
-
-/* INICIAR GPS */
-
-function iniciar(){
-
-var nombre=document.getElementById("nombre").value;
-
-if(!nombre){
-
-alert("Seleccione su nombre");
-return;
-
-}
-
-var horaInicio=new Date().toLocaleTimeString();
-
-intervaloGPS=setInterval(function(){
-
-navigator.geolocation.getCurrentPosition(function(pos){
-
-var lat=pos.coords.latitude;
-var lon=pos.coords.longitude;
-
-var fecha=new Date().toISOString().split('T')[0];
-
-db.ref("cobradores/"+nombre).update({
-
-latitud:lat,
-longitud:lon,
-estado:"trabajando",
-hora_inicio:horaInicio,
-ultima_actualizacion:Date.now()
-
-});
-
-/* GUARDAR RUTA */
-
-db.ref("rutas/"+nombre+"/"+fecha).push({
-
-latitud:lat,
-longitud:lon,
-hora:new Date().toLocaleTimeString(),
-timestamp:Date.now()
-
-});
-
-});
-
-},10000); /* CADA 10 SEGUNDOS */
-
-alert("GPS ACTIVADO");
-
-}
-
-/* INICIO ALMUERZO */
-
-function inicioAlmuerzo(){
-
-var nombre=document.getElementById("nombre").value;
-
-var hora=new Date().toLocaleTimeString();
-
-db.ref("cobradores/"+nombre).update({
-
-estado:"almuerzo",
-hora_inicio_almuerzo:hora
-
-});
-
-}
-
-/* FIN ALMUERZO */
-
-function finAlmuerzo(){
-
-var nombre=document.getElementById("nombre").value;
-
-var hora=new Date().toLocaleTimeString();
-
-db.ref("cobradores/"+nombre).update({
-
-estado:"trabajando",
-hora_fin_almuerzo:hora
-
-});
-
-}
-
-/* FINALIZAR */
-
-function finalizar(){
-
-var nombre=document.getElementById("nombre").value;
-
-clearInterval(intervaloGPS);
-
-navigator.geolocation.getCurrentPosition(function(pos){
-
-var lat=pos.coords.latitude;
-var lon=pos.coords.longitude;
-
-var hora=new Date().toLocaleTimeString();
-
-db.ref("cobradores/"+nombre).update({
-
-latitud:lat,
-longitud:lon,
-estado:"finalizado",
-hora_fin_ruta:hora,
-ultima_actualizacion:Date.now()
-
-});
-
-});
-
-alert("JORNADA FINALIZADA");
-
-}
-
-</script>
-
+  <!-- Banner sin conexión -->
+  <div id="offline-banner">📵 SIN CONEXIÓN · Guardando en cola local</div>
+
+  <div class="header">
+    <div class="badge" id="conn-badge">SISTEMA GPS · ACTIVO</div>
+    <h1>Control de<br>Cobradores</h1>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+
+  <div class="card">
+
+    <p class="field-label">Seleccionar cobrador</p>
+    <div class="custom-select-wrap" id="selectWrap">
+      <button type="button" class="custom-select-btn" id="selectBtn" onclick="toggleDropdown()">
+        <span id="selectLabel" class="placeholder">— SELECCIONAR COBRADOR —</span>
+        <svg class="arrow" viewBox="0 0 12 8" fill="none" stroke="#00c6ff" stroke-width="2" stroke-linecap="round">
+          <path d="M1 1l5 5 5-5"/>
+        </svg>
+      </button>
+      <div class="custom-dropdown" id="customDropdown">
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'')"><span class="d-dot"></span>— SELECCIONAR —</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'FAUSTO VILLARREAL')"><span class="d-dot"></span>FAUSTO VILLARREAL</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'ADOLFO GONZALEZ')"><span class="d-dot"></span>ADOLFO GONZALEZ</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'FRANKLIN CARRANZA')"><span class="d-dot"></span>FRANKLIN CARRANZA</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'GABRIEL MORAN')"><span class="d-dot"></span>GABRIEL MORAN</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'GUILLERMO MONTAÑO')"><span class="d-dot"></span>GUILLERMO MONTAÑO</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'JEFFERSON QUIÑONEZ')"><span class="d-dot"></span>JEFFERSON QUIÑONEZ</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'JULIO JARA')"><span class="d-dot"></span>JULIO JARA</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'RAFAEL MILLAN')"><span class="d-dot"></span>RAFAEL MILLAN</div>
+        <div class="dropdown-item" onclick="seleccionarCobrador(this,'VICTOR MENDOZA')"><span class="d-dot"></span>VICTOR MENDOZA</div>
+      </div>
+    </div>
+    <input type="hidden" id="nombre" value="">
+
+    <div class="divider"><span>ACCIONES</span></div>
+
+    <div class="btn-group">
+      <button class="btn-start" onclick="pedirConfirmacion('iniciarGPS')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" opacity=".4"/>
+          <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+        </svg>
+        INICIAR GPS
+      </button>
+
+      <div class="btn-row">
+        <button class="btn-lunch-start" onclick="pedirConfirmacion('inicioAlmuerzo')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+            <line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+          </svg>
+          INICIO<br>ALMUERZO
+        </button>
+        <button class="btn-lunch-end" onclick="pedirConfirmacion('finAlmuerzo')">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          FIN<br>ALMUERZO
+        </button>
+      </div>
+
+      <button class="btn-stop" onclick="pedirConfirmacion('finalizarRutaGPS')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+        </svg>
+        FINALIZAR RUTA GPS
+      </button>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="status-dot" id="statusDot"></div>
+      <div class="status-body">
+        <div class="status-label">ESTADO ACTUAL</div>
+        <div class="status-value c-espera" id="statusValue">EN ESPERA</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="cola-info">📦 <span id="cola-count">0</span> acción(es) pendiente(s) de sincronizar</div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-icon" id="modalIcon">📍</div>
+      <div class="modal-title">Confirmar acción</div>
+      <div class="modal-action" id="modalAction">—</div>
+      <div class="modal-name" id="modalName">—</div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="cerrarModal()">✕ Cancelar</button>
+        <button class="modal-confirm" id="modalConfirmBtn" onclick="ejecutarAccion()">✓ Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script>
+    // ── Service Worker (PWA offline) ──────────────────────
+    if ('serviceWorker' in navigator) {
+      var swCode = `
+        var CACHE = 'gps-cob-v1';
+        var URLS  = [location.href];
+        self.addEventListener('install', function(e) {
+          e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(URLS); }));
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', function(e) {
+          e.waitUntil(clients.claim());
+        });
+        self.addEventListener('fetch', function(e) {
+          e.respondWith(
+            fetch(e.request).catch(function(){
+              return caches.match(e.request);
+            })
+          );
+        });
+      `;
+      var swBlob = new Blob([swCode], {type: 'application/javascript'});
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+        .catch(function(){});
+    }
+
+    // ── Dropdown ──────────────────────────────────────────
+    var dropdownOpen = false;
+
+    function toggleDropdown() {
+      dropdownOpen = !dropdownOpen;
+      document.getElementById('selectBtn').classList.toggle('open', dropdownOpen);
+      document.getElementById('customDropdown').classList.toggle('open', dropdownOpen);
+    }
+
+    function seleccionarCobrador(el, valor) {
+      document.getElementById('nombre').value = valor;
+      var label = document.getElementById('selectLabel');
+      if (valor) {
+        label.textContent = valor;
+        label.classList.remove('placeholder');
+      } else {
+        label.textContent = '— SELECCIONAR COBRADOR —';
+        label.classList.add('placeholder');
+      }
+      document.querySelectorAll('.dropdown-item').forEach(function(i){ i.classList.remove('selected'); });
+      el.classList.add('selected');
+      dropdownOpen = false;
+      document.getElementById('selectBtn').classList.remove('open');
+      document.getElementById('customDropdown').classList.remove('open');
+    }
+
+    document.addEventListener('click', function(e) {
+      if (dropdownOpen) {
+        var wrap = document.getElementById('selectWrap');
+        if (wrap && !wrap.contains(e.target)) {
+          dropdownOpen = false;
+          document.getElementById('selectBtn').classList.remove('open');
+          document.getElementById('customDropdown').classList.remove('open');
+        }
+      }
+    });
+
+    // ── Firebase ──────────────────────────────────────────
+    var firebaseConfig = {
+      apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+      authDomain: "gps-cobradores.firebaseapp.com",
+      databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+      projectId: "gps-cobradores"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+
+    var intervaloGPS    = null;
+    var accionPendiente = null;
+
+    // ── Cola offline ──────────────────────────────────────
+    // Guardamos acciones pendientes en localStorage cuando no hay red
+    var COLA_KEY = 'gps_cola_pendiente';
+
+    function cargarCola() {
+      try { return JSON.parse(localStorage.getItem(COLA_KEY) || '[]'); } catch(e) { return []; }
+    }
+    function guardarCola(cola) {
+      try { localStorage.setItem(COLA_KEY, JSON.stringify(cola)); } catch(e) {}
+    }
+    function actualizarColaUI() {
+      var cola = cargarCola();
+      var el = document.getElementById('cola-info');
+      var cnt = document.getElementById('cola-count');
+      if (cola.length > 0) {
+        cnt.textContent = cola.length;
+        el.classList.add('show');
+      } else {
+        el.classList.remove('show');
+      }
+    }
+
+    function agregarACola(nombre, estado, lat, lon) {
+      var cola = cargarCola();
+      cola.push({ nombre: nombre, estado: estado, hora: new Date().toLocaleTimeString('es-EC'), lat: lat, lon: lon, ts: Date.now() });
+      guardarCola(cola);
+      actualizarColaUI();
+    }
+
+    function sincronizarCola() {
+      var cola = cargarCola();
+      if (cola.length === 0) return;
+      var pendientes = cola.slice();
+      guardarCola([]);
+      actualizarColaUI();
+      pendientes.forEach(function(item) {
+        var datos = { estado: item.estado, hora: item.hora };
+        if (item.lat) { datos.latitud = item.lat; datos.longitud = item.lon; }
+        db.ref('cobradores/' + item.nombre).update(datos)
+          .catch(function() {
+            // Si falla de nuevo, volver a la cola
+            agregarACola(item.nombre, item.estado, item.lat, item.lon);
+          });
+      });
+      if (pendientes.length > 0) showToast('☁ ' + pendientes.length + ' acción(es) sincronizadas');
+    }
+
+    // ── Conectividad ──────────────────────────────────────
+    function actualizarConexion() {
+      var online = navigator.onLine;
+      document.getElementById('offline-banner').classList.toggle('show', !online);
+      document.getElementById('conn-badge').textContent = online ? 'SISTEMA GPS · ACTIVO' : 'SISTEMA GPS · OFFLINE';
+      if (online) sincronizarCola();
+    }
+
+    window.addEventListener('online',  actualizarConexion);
+    window.addEventListener('offline', actualizarConexion);
+    actualizarConexion();
+
+    // Firebase también detecta conexión
+    db.ref('.info/connected').on('value', function(snap) {
+      if (snap.val() === true) sincronizarCola();
+    });
+
+    // ── Reloj ─────────────────────────────────────────────
+    setInterval(function(){
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
+    }, 1000);
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
+
+    // ── Toast ─────────────────────────────────────────────
+    var toastTimer;
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+    }
+
+    // ── Estado visual ─────────────────────────────────────
+    var ESTADOS = {
+      active: { dot:'active', bar:'s-trabajando', val:'c-trabajando', txt:'TRABAJANDO'      },
+      lunch:  { dot:'lunch',  bar:'s-almorzando', val:'c-almorzando', txt:'ALMORZANDO'      },
+      done:   { dot:'done',   bar:'s-finalizado', val:'c-finalizado', txt:'RUTA FINALIZADA' },
+      espera: { dot:'',       bar:'',             val:'c-espera',     txt:'EN ESPERA'       }
+    };
+    function setStatus(type) {
+      var cfg = ESTADOS[type] || ESTADOS.espera;
+      document.getElementById('statusDot').className    = 'status-dot '   + cfg.dot;
+      document.getElementById('statusBar').className    = 'status-bar '   + cfg.bar;
+      document.getElementById('statusValue').className  = 'status-value ' + cfg.val;
+      document.getElementById('statusValue').textContent = cfg.txt;
+    }
+
+    // ── Modal ─────────────────────────────────────────────
+    var ACCIONES = {
+      iniciarGPS:       { icon:'📍', label:'Iniciar GPS',        color:'#00e676', colorDark:'#007a38' },
+      inicioAlmuerzo:   { icon:'☕', label:'Inicio Almuerzo',    color:'#ff9100', colorDark:'#a04000' },
+      finAlmuerzo:      { icon:'✅', label:'Fin Almuerzo',       color:'#ffd600', colorDark:'#907000' },
+      finalizarRutaGPS: { icon:'🏁', label:'Finalizar Ruta GPS', color:'#ff1744', colorDark:'#880015' }
+    };
+
+    function pedirConfirmacion(accion) {
+      var nombre = document.getElementById('nombre').value;
+      if (!nombre) { showToast('⚠ Selecciona un cobrador primero'); return; }
+      var cfg = ACCIONES[accion];
+      document.getElementById('modalIcon').textContent   = cfg.icon;
+      document.getElementById('modalAction').textContent = cfg.label;
+      document.getElementById('modalAction').style.color = cfg.color;
+      document.getElementById('modalName').textContent   = nombre;
+      document.getElementById('modalConfirmBtn').style.background =
+        'linear-gradient(135deg,' + cfg.colorDark + ',' + cfg.color + ')';
+      document.getElementById('modalConfirmBtn').style.color =
+        accion === 'finAlmuerzo' ? '#1a1200' : '#fff';
+      accionPendiente = accion;
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function cerrarModal() {
+      document.getElementById('modalOverlay').classList.remove('show');
+      accionPendiente = null;
+    }
+
+    function ejecutarAccion() {
+      var a = accionPendiente;
+      cerrarModal();
+      if      (a === 'iniciarGPS')       _iniciarGPS();
+      else if (a === 'inicioAlmuerzo')   _inicioAlmuerzo();
+      else if (a === 'finAlmuerzo')      _finAlmuerzo();
+      else if (a === 'finalizarRutaGPS') _finalizarRutaGPS();
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e){
+      if (e.target === this) cerrarModal();
+    });
+
+    // ── Enviar GPS (con soporte offline) ──────────────────
+    function enviarGPS(estado, statusKey) {
+      var nombre = document.getElementById('nombre').value;
+      setStatus(statusKey);
+
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          var lat = pos.coords.latitude;
+          var lon = pos.coords.longitude;
+          var hora = new Date().toLocaleTimeString('es-EC');
+          if (navigator.onLine) {
+            db.ref('cobradores/' + nombre).set({ estado: estado, hora: hora, latitud: lat, longitud: lon })
+              .catch(function(){ agregarACola(nombre, estado, lat, lon); });
+          } else {
+            agregarACola(nombre, estado, lat, lon);
+          }
+        },
+        function() {
+          // Sin GPS
+          var hora = new Date().toLocaleTimeString('es-EC');
+          if (navigator.onLine) {
+            db.ref('cobradores/' + nombre).update({ estado: estado, hora: hora })
+              .catch(function(){ agregarACola(nombre, estado, null, null); });
+          } else {
+            agregarACola(nombre, estado, null, null);
+          }
+        },
+        { timeout: 10000, maximumAge: 30000, enableHighAccuracy: true }
+      );
+    }
+
+    function _iniciarGPS() {
+      if (intervaloGPS) clearInterval(intervaloGPS);
+      showToast('✓ GPS iniciado correctamente');
+      enviarGPS('trabajando', 'active');
+      intervaloGPS = setInterval(function(){ enviarGPS('trabajando', 'active'); }, 60000);
+    }
+
+    function _inicioAlmuerzo() {
+      showToast('☕ Inicio de almuerzo registrado');
+      enviarGPS('almuerzo', 'lunch');
+    }
+
+    function _finAlmuerzo() {
+      showToast('✓ Fin de almuerzo — regresó al trabajo');
+      enviarGPS('trabajando', 'active');
+    }
+
+    function _finalizarRutaGPS() {
+      if (intervaloGPS) { clearInterval(intervaloGPS); intervaloGPS = null; }
+      showToast('🏁 Ruta GPS finalizada');
+      enviarGPS('finalizado', 'done');
+    }
+
+    // Cargar cola al inicio
+    actualizarColaUI();
+  </script>
 </body>
-
 </html>
