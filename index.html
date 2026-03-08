@@ -553,7 +553,7 @@
       var online = navigator.onLine;
       document.getElementById('offline-banner').classList.toggle('show', !online);
       document.getElementById('conn-badge').textContent = online ? 'SISTEMA GPS · ACTIVO' : 'SISTEMA GPS · OFFLINE';
-      if (online) sincronizarCola();
+      if (online) { sincronizarCola(); sincronizarPuntosCola(); }
     }
 
     window.addEventListener('online',  actualizarConexion);
@@ -638,25 +638,66 @@
       if (e.target === this) cerrarModal();
     });
 
+    // ── Guardar punto de evento en Firebase ──────────────
+    var EVENTOS = {
+      'trabajando':  { emoji: '🟢', label: 'INICIO SESIÓN' },
+      'almuerzo':    { emoji: '☕', label: 'INICIO ALMUERZO' },
+      'fin_almuerzo':{ emoji: '✅', label: 'FIN ALMUERZO' },
+      'finalizado':  { emoji: '🏁', label: 'FIN RUTA' }
+    };
+
+    function guardarPunto(nombre, tipoEvento, lat, lon) {
+      var hora  = new Date().toLocaleTimeString('es-EC');
+      var fecha = new Date().toLocaleDateString('es-EC');
+      var ev    = EVENTOS[tipoEvento] || { emoji: '📍', label: tipoEvento.toUpperCase() };
+      var dato  = { evento: tipoEvento, label: ev.label, hora: hora, fecha: fecha };
+      if (lat) { dato.latitud = lat; dato.longitud = lon; }
+
+      var keyEvento = tipoEvento; // clave fija por tipo: solo 1 por evento por día
+      if (navigator.onLine) {
+        db.ref('puntos/' + nombre + '/' + keyEvento).set(dato);
+      } else {
+        // Guardar en cola offline
+        try {
+          var colaPuntos = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
+          colaPuntos.push({ nombre: nombre, keyEvento: keyEvento, dato: dato });
+          localStorage.setItem('gps_puntos_cola', JSON.stringify(colaPuntos));
+        } catch(e) {}
+      }
+    }
+
+    function sincronizarPuntosCola() {
+      try {
+        var cola = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
+        if (!cola.length) return;
+        localStorage.removeItem('gps_puntos_cola');
+        cola.forEach(function(item) {
+          db.ref('puntos/' + item.nombre + '/' + item.keyEvento).set(item.dato);
+        });
+      } catch(e) {}
+    }
+
     // ── Enviar GPS (con soporte offline) ──────────────────
-    function enviarGPS(estado, statusKey) {
+    function enviarGPS(estado, statusKey, tipoEvento) {
       var nombre = document.getElementById('nombre').value;
       setStatus(statusKey);
 
       navigator.geolocation.getCurrentPosition(
         function(pos) {
-          var lat = pos.coords.latitude;
-          var lon = pos.coords.longitude;
+          var lat  = pos.coords.latitude;
+          var lon  = pos.coords.longitude;
           var hora = new Date().toLocaleTimeString('es-EC');
+          var datos = { estado: estado, hora: hora, latitud: lat, longitud: lon };
           if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).set({ estado: estado, hora: hora, latitud: lat, longitud: lon })
+            db.ref('cobradores/' + nombre).set(datos)
               .catch(function(){ agregarACola(nombre, estado, lat, lon); });
           } else {
             agregarACola(nombre, estado, lat, lon);
           }
+          // Guardar punto de evento
+          if (tipoEvento) guardarPunto(nombre, tipoEvento, lat, lon);
         },
         function() {
-          // Sin GPS
           var hora = new Date().toLocaleTimeString('es-EC');
           if (navigator.onLine) {
             db.ref('cobradores/' + nombre).update({ estado: estado, hora: hora })
@@ -664,6 +705,7 @@
           } else {
             agregarACola(nombre, estado, null, null);
           }
+          if (tipoEvento) guardarPunto(nombre, tipoEvento, null, null);
         },
         { timeout: 10000, maximumAge: 30000, enableHighAccuracy: true }
       );
@@ -672,24 +714,24 @@
     function _iniciarGPS() {
       if (intervaloGPS) clearInterval(intervaloGPS);
       showToast('✓ GPS iniciado correctamente');
-      enviarGPS('trabajando', 'active');
-      intervaloGPS = setInterval(function(){ enviarGPS('trabajando', 'active'); }, 60000);
+      enviarGPS('trabajando', 'active', 'trabajando');
+      intervaloGPS = setInterval(function(){ enviarGPS('trabajando', 'active', null); }, 60000);
     }
 
     function _inicioAlmuerzo() {
       showToast('☕ Inicio de almuerzo registrado');
-      enviarGPS('almuerzo', 'lunch');
+      enviarGPS('almuerzo', 'lunch', 'almuerzo');
     }
 
     function _finAlmuerzo() {
       showToast('✓ Fin de almuerzo — regresó al trabajo');
-      enviarGPS('trabajando', 'active');
+      enviarGPS('trabajando', 'active', 'fin_almuerzo');
     }
 
     function _finalizarRutaGPS() {
       if (intervaloGPS) { clearInterval(intervaloGPS); intervaloGPS = null; }
       showToast('🏁 Ruta GPS finalizada');
-      enviarGPS('finalizado', 'done');
+      enviarGPS('finalizado', 'done', 'finalizado');
     }
 
     // Cargar cola al inicio
