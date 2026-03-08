@@ -1,748 +1,1012 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="GPS Cobradores">
-  <meta name="theme-color" content="#080d18">
-  <title>GPS Cobradores</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Supervisor · GPS Cobradores</title>
 
-  <!-- Manifest inline via blob (PWA installable) -->
-  <script>
-    var manifest = {
-      name: "GPS Cobradores",
-      short_name: "GPS Cob",
-      start_url: ".",
-      display: "standalone",
-      background_color: "#080d18",
-      theme_color: "#080d18",
-      icons: [{
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23080d18'/%3E%3Ccircle cx='96' cy='96' r='30' fill='%2300c6ff'/%3E%3Ccircle cx='96' cy='96' r='55' fill='none' stroke='%2300c6ff' stroke-width='8' opacity='.4'/%3E%3Cline x1='96' y1='20' x2='96' y2='46' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='96' y1='146' x2='96' y2='172' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='20' y1='96' x2='46' y2='96' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='146' y1='96' x2='172' y2='96' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
-        sizes: "192x192",
-        type: "image/svg+xml"
-      }]
-    };
-    var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    var link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = URL.createObjectURL(blob);
-    document.head.appendChild(link);
-  </script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<style>
+:root {
+  --bg: #080d18;
+  --panel: #0e1623;
+  --card: #111d2e;
+  --border: #1a3050;
+  --accent: #00c6ff;
+  --accent2: #0072ff;
+  --green: #00e676;
+  --orange: #ff9100;
+  --red: #ff1744;
+  --yellow: #ffd600;
+  --text: #d8eaff;
+  --muted: #3d5a7a;
+  --sidebar-w: 320px;
+}
 
-  <!-- Google Fonts con fallback offline -->
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <style>
-    /* Fuente fallback si no hay internet */
-    @font-face {
-      font-family: 'Rajdhani';
-      font-weight: 700;
-      src: local('Arial Black'), local('Impact');
-    }
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-    :root {
-      --bg:     #080d18;
-      --panel:  #0f1928;
-      --border: #1e3a5f;
-      --accent: #00c6ff;
-      --green:  #00e676;
-      --orange: #ff9100;
-      --red:    #ff1744;
-      --yellow: #ffd600;
-      --text:   #e8f0ff;
-      --muted:  #4a6080;
-    }
+/* ── TOPBAR ── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  z-index: 100;
+}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; overflow-x: hidden; }
+.topbar-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #d8eaff, #00c6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-right: 10px;
+  white-space: nowrap;
+}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px 14px 40px;
-      background-image:
-        radial-gradient(ellipse at 15% 10%, rgba(0,114,255,0.1) 0%, transparent 55%),
-        radial-gradient(ellipse at 85% 85%, rgba(0,198,255,0.07) 0%, transparent 50%);
-    }
+.topbar-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  background: rgba(0,198,255,0.08);
+  border: 1px solid rgba(0,198,255,0.2);
+  border-radius: 3px;
+  padding: 3px 8px;
+  margin-right: 16px;
+}
 
-    /* ── OFFLINE BANNER ── */
-    #offline-banner {
-      display: none;
-      width: 100%;
-      max-width: 500px;
-      background: rgba(255,145,0,0.15);
-      border: 1px solid rgba(255,145,0,0.4);
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: var(--orange);
-      text-align: center;
-      margin-bottom: 12px;
-    }
-    #offline-banner.show { display: block; }
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.nav-btn:hover, .nav-btn.active {
+  background: rgba(0,198,255,0.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.nav-btn.danger { color: #ff6b6b; border-color: #3a1020; }
+.nav-btn.danger:hover { background: rgba(255,23,68,0.08); border-color: var(--red); color: var(--red); }
+.nav-btn.success { color: #4dffb0; border-color: #0a3020; }
+.nav-btn.success:hover { background: rgba(0,230,118,0.08); border-color: var(--green); color: var(--green); }
 
-    /* ── HEADER ── */
-    .header { width: 100%; max-width: 500px; text-align: center; margin-bottom: 18px; }
-    .badge {
-      display: inline-block;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px; letter-spacing: 4px;
-      color: var(--accent);
-      background: rgba(0,198,255,0.08);
-      border: 1px solid rgba(0,198,255,0.25);
-      border-radius: 4px; padding: 4px 12px; margin-bottom: 10px;
-    }
-    .header h1 {
-      font-size: 26px; font-weight: 700;
-      letter-spacing: 3px; text-transform: uppercase; line-height: 1.15;
-      background: linear-gradient(135deg, #e8f0ff 0%, #00c6ff 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .clock {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 13px; color: var(--muted); letter-spacing: 2px; margin-top: 6px;
-    }
+#clock-top {
+  margin-left: auto;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
 
-    /* ── CARD ── */
-    .card {
-      width: 100%; max-width: 500px;
-      background: var(--panel); border: 1px solid var(--border);
-      border-radius: 18px; padding: 22px 18px 24px;
-      box-shadow: 0 10px 50px rgba(0,0,0,0.55);
-      overflow: visible;
-    }
+/* ── MAIN LAYOUT ── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
 
-    .field-label {
-      font-size: 10px; letter-spacing: 3px; color: var(--muted);
-      text-transform: uppercase; margin-bottom: 8px;
-    }
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
 
-    /* ── DROPDOWN ── */
-    .custom-select-wrap { position: relative; width: 100%; user-select: none; z-index: 200; }
+#sidebar-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
 
-    .custom-select-btn {
-      width: 100%; padding: 16px 18px;
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      font-size: 18px; font-weight: 700; letter-spacing: 1px;
-      color: var(--text); background: rgba(0,198,255,0.05);
-      border: 1px solid var(--border); border-radius: 10px;
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: space-between; gap: 10px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      text-align: left; min-height: 58px;
-    }
-    .custom-select-btn.open {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0,198,255,0.15);
-    }
-    .placeholder { color: var(--muted); font-size: 15px; }
-    .arrow { width: 14px; height: 14px; flex-shrink: 0; transition: transform 0.25s; }
-    .custom-select-btn.open .arrow { transform: rotate(180deg); }
+#sidebar-header h3 {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
 
-    .custom-dropdown {
-      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-      background: #0a1525; border: 1px solid var(--accent);
-      border-radius: 12px; overflow: hidden;
-      box-shadow: 0 16px 50px rgba(0,0,0,0.85);
-      z-index: 9999; display: none;
-    }
-    .custom-dropdown.open { display: block; animation: dropIn 0.2s ease; }
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 4px;
+}
 
-    @keyframes dropIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+.stat-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+}
 
-    .dropdown-item {
-      padding: 16px 20px;
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      font-size: 17px; font-weight: 600; letter-spacing: 1px;
-      color: #8ab4d8; cursor: pointer;
-      border-bottom: 1px solid rgba(30,58,95,0.5);
-      display: flex; align-items: center; gap: 12px; min-height: 54px;
-      transition: background 0.15s, color 0.15s;
-    }
-    .dropdown-item:last-child { border-bottom: none; }
-    .dropdown-item:active { background: rgba(0,198,255,0.15); color: #fff; }
-    .dropdown-item.selected { background: rgba(0,198,255,0.1); color: var(--accent); }
-    .d-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent); flex-shrink: 0; opacity: 0.4;
-    }
-    .dropdown-item.selected .d-dot { opacity: 1; box-shadow: 0 0 6px var(--accent); }
+.stat-box .num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
 
-    /* ── DIVIDER ── */
-    .divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 18px; }
-    .divider span { font-size: 10px; letter-spacing: 3px; color: var(--muted); white-space: nowrap; }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.stat-box .lbl {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
 
-    /* ── BUTTONS ── */
-    .btn-group { display: flex; flex-direction: column; gap: 12px; }
-    .btn-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-box.green .num { color: var(--green); }
+.stat-box.red .num   { color: var(--red); }
+.stat-box.orange .num { color: var(--orange); }
 
-    button {
-      position: relative; display: flex; align-items: center;
-      justify-content: center; gap: 10px; padding: 0 16px; height: 64px;
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      font-size: 17px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; border: none; border-radius: 12px;
-      cursor: pointer; transition: transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation; line-height: 1.2; text-align: center;
-    }
-    button:active { transform: scale(0.94); }
-    .icon { width: 22px; height: 22px; flex-shrink: 0; }
+/* Search */
+#search {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#search:focus { border-color: var(--accent); }
+#search::placeholder { color: var(--muted); }
 
-    .btn-start {
-      background: linear-gradient(135deg, #007a38, #00e676); color: #001f0e;
-      box-shadow: 0 6px 24px rgba(0,230,118,0.38); font-size: 20px; height: 72px;
-    }
-    .btn-lunch-start {
-      background: linear-gradient(135deg, #a04000, #ff9100); color: #200e00;
-      box-shadow: 0 6px 24px rgba(255,145,0,0.35);
-    }
-    .btn-lunch-end {
-      background: linear-gradient(135deg, #907000, #ffd600); color: #1a1200;
-      box-shadow: 0 6px 24px rgba(255,214,0,0.3);
-    }
-    .btn-stop {
-      background: linear-gradient(135deg, #880015, #ff1744); color: #fff;
-      box-shadow: 0 6px 24px rgba(255,23,68,0.35); font-size: 20px; height: 72px;
-    }
+/* Cobrador list */
+#cobrador-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
 
-    /* ── STATUS ── */
-    .status-bar {
-      margin-top: 20px; background: rgba(0,0,0,0.3);
-      border: 2px solid var(--border); border-radius: 12px;
-      padding: 16px 18px; display: flex; align-items: center;
-      gap: 14px; min-height: 72px;
-      transition: border-color 0.4s, background 0.4s;
-    }
-    .status-bar.s-trabajando { border-color: rgba(0,230,118,0.5); background: rgba(0,230,118,0.06); }
-    .status-bar.s-almorzando { border-color: rgba(255,145,0,0.5);  background: rgba(255,145,0,0.06); }
-    .status-bar.s-finalizado { border-color: rgba(255,23,68,0.5);  background: rgba(255,23,68,0.06); }
+#cobrador-list::-webkit-scrollbar { width: 4px; }
+#cobrador-list::-webkit-scrollbar-track { background: transparent; }
+#cobrador-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    .status-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--muted); flex-shrink: 0;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    .status-dot.active { background: var(--green);  box-shadow: 0 0 12px var(--green);  animation: pulse 1.4s infinite; }
-    .status-dot.lunch  { background: var(--orange); box-shadow: 0 0 12px var(--orange); animation: pulse 1.4s infinite; }
-    .status-dot.done   { background: var(--red);    box-shadow: 0 0 12px var(--red); }
+.cobrador-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  overflow: hidden;
+}
 
-    @keyframes pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:0.3; transform:scale(0.75); }
-    }
+.cobrador-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
 
-    .status-body { flex: 1; }
-    .status-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-    .status-value { font-size: 26px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; transition: color 0.3s; }
-    .status-value.c-trabajando { color: var(--green); }
-    .status-value.c-almorzando { color: var(--orange); }
-    .status-value.c-finalizado { color: var(--red); }
-    .status-value.c-espera     { color: var(--muted); }
+.cobrador-card.trabajando::before { background: var(--green); }
+.cobrador-card.almuerzo::before   { background: var(--orange); }
+.cobrador-card.finalizado::before { background: var(--red); }
+.cobrador-card.sin-gps::before    { background: var(--muted); }
 
-    /* ── MODAL ── */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
-      z-index: 1000; display: flex; align-items: center;
-      justify-content: center; padding: 20px;
-      opacity: 0; pointer-events: none; transition: opacity 0.25s;
-    }
-    .modal-overlay.show { opacity: 1; pointer-events: all; }
-    .modal-box {
-      background: #0f1928; border: 1px solid var(--border); border-radius: 18px;
-      padding: 30px 22px 24px; width: 100%; max-width: 360px;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.85);
-      transform: scale(0.9) translateY(20px);
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      text-align: center;
-    }
-    .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
-    .modal-icon   { font-size: 48px; margin-bottom: 14px; }
-    .modal-title  { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
-    .modal-action { font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    .modal-name   { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: var(--accent); margin-bottom: 28px; letter-spacing: 1px; }
-    .modal-btns   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .modal-cancel {
-      height: 56px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase; background: transparent;
-      border: 1px solid var(--border); border-radius: 10px; color: var(--muted); cursor: pointer;
-    }
-    .modal-cancel:active { background: rgba(255,255,255,0.05); color: var(--text); }
-    .modal-confirm {
-      height: 56px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase; border: none; border-radius: 10px;
-      cursor: pointer; color: white;
-    }
-    .modal-confirm:active { opacity: 0.8; }
+.cobrador-card:hover {
+  border-color: var(--accent);
+  background: rgba(0,198,255,0.04);
+}
 
-    /* ── TOAST ── */
-    .toast {
-      position: fixed; bottom: 28px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #0f1928; border: 1px solid var(--accent); border-radius: 12px;
-      padding: 14px 26px; font-family: 'Rajdhani', sans-serif;
-      font-size: 17px; font-weight: 700; letter-spacing: 1px; color: var(--accent);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
-      opacity: 0; z-index: 9999; pointer-events: none;
-      white-space: nowrap; max-width: 90vw; text-align: center;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.cobrador-card .c-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
 
-    /* ── COLA OFFLINE ── */
-    #cola-info {
-      display: none;
-      width: 100%; max-width: 500px;
-      background: rgba(0,198,255,0.06);
-      border: 1px solid rgba(0,198,255,0.2);
-      border-radius: 8px; padding: 10px 16px;
-      font-size: 12px; font-weight: 600; letter-spacing: 1px;
-      color: var(--accent); text-align: center; margin-top: 12px;
-    }
-    #cola-info.show { display: block; }
-  </style>
+.cobrador-card .c-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.estado-pill {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.pill-trabajando { background: rgba(0,230,118,0.12); color: var(--green); border: 1px solid rgba(0,230,118,0.25); }
+.pill-almuerzo   { background: rgba(255,145,0,0.12);  color: var(--orange); border: 1px solid rgba(255,145,0,0.25); }
+.pill-finalizado { background: rgba(255,23,68,0.12);  color: var(--red);    border: 1px solid rgba(255,23,68,0.25); }
+.pill-sin-gps    { background: rgba(61,90,122,0.2);   color: var(--muted);  border: 1px solid var(--border); }
+
+.c-hora {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.c-fecha {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+/* alerta detenido */
+.c-alert {
+  font-size: 11px;
+  color: var(--red);
+  margin-top: 5px;
+  letter-spacing: 0.5px;
+}
+
+/* ── MAP ── */
+#map-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Map overlay alertas */
+#alertas-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 260px;
+  pointer-events: none;
+}
+
+.alerta-chip {
+  background: rgba(255,23,68,0.9);
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Map corner info */
+#map-legend {
+  position: absolute;
+  bottom: 28px;
+  left: 12px;
+  z-index: 500;
+  background: rgba(10, 18, 35, 0.92);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  color: var(--text);
+}
+
+.legend-item:last-child { margin-bottom: 0; }
+
+.leg-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Leaflet popup override */
+.leaflet-popup-content-wrapper {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--text) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
+}
+.leaflet-popup-tip { background: var(--card) !important; }
+.leaflet-popup-content { font-size: 14px !important; line-height: 1.6 !important; }
+.popup-name { font-size: 16px; font-weight: 700; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; }
+.popup-row  { color: var(--muted); font-size: 12px; font-family: 'Share Tech Mono', monospace; }
+.popup-row span { color: var(--text); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--accent);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+  opacity: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* Scrollbar map panel */
+.leaflet-control-zoom {
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom a {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: none !important;
+}
+.leaflet-control-zoom a:hover { background: var(--card) !important; }
+</style>
 </head>
 <body>
 
-  <!-- Banner sin conexión -->
-  <div id="offline-banner">📵 SIN CONEXIÓN · Guardando en cola local</div>
+<!-- TOPBAR -->
+<div id="topbar">
+  <span class="topbar-title">GPS Cobradores</span>
+  <span class="topbar-badge">SUPERVISOR</span>
 
-  <div class="header">
-    <div class="badge" id="conn-badge">SISTEMA GPS · ACTIVO</div>
-    <h1>Control de<br>Cobradores</h1>
-    <div class="clock" id="clock">--:--:--</div>
+  <button class="nav-btn active" onclick="setView('mapa',this)">📍 Mapa en Vivo</button>
+  <button class="nav-btn success" onclick="setView('activos',this)">🟢 Activos</button>
+  <button class="nav-btn danger" onclick="setView('sin-gps',this)">🔴 Sin GPS</button>
+  <button class="nav-btn" onclick="setView('detenciones',this)">⚠ Detenidos</button>
+  <button class="nav-btn" onclick="descargarExcel()">📥 Excel</button>
+  <button class="nav-btn danger" onclick="confirmarBorrar()" style="margin-left:auto;">🗑 Borrar Datos</button>
+
+  <span id="clock-top">--:--:--</span>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h3>Panel de cobradores</h3>
+      <div class="stats-row">
+        <div class="stat-box green">
+          <div class="num" id="cnt-activos">0</div>
+          <div class="lbl">Activos</div>
+        </div>
+        <div class="stat-box orange">
+          <div class="num" id="cnt-almuerzo">0</div>
+          <div class="lbl">Almuerzo</div>
+        </div>
+        <div class="stat-box red">
+          <div class="num" id="cnt-sin">0</div>
+          <div class="lbl">Sin GPS</div>
+        </div>
+      </div>
+      <input id="search" type="text" placeholder="🔍  Buscar cobrador..." oninput="filtrarLista(this.value)">
+    </div>
+    <div id="cobrador-list"></div>
   </div>
 
-  <div class="card">
-
-    <p class="field-label">Seleccionar cobrador</p>
-    <div class="custom-select-wrap" id="selectWrap">
-      <button type="button" class="custom-select-btn" id="selectBtn" onclick="toggleDropdown()">
-        <span id="selectLabel" class="placeholder">— SELECCIONAR COBRADOR —</span>
-        <svg class="arrow" viewBox="0 0 12 8" fill="none" stroke="#00c6ff" stroke-width="2" stroke-linecap="round">
-          <path d="M1 1l5 5 5-5"/>
-        </svg>
-      </button>
-      <div class="custom-dropdown" id="customDropdown">
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'')"><span class="d-dot"></span>— SELECCIONAR —</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'AGUILAR CONTRERAS BYRON LUIS')"><span class="d-dot"></span>AGUILAR CONTRERAS BYRON LUIS</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'CARRANZA JIMENEZ FRANKLIN GEOVANNY')"><span class="d-dot"></span>CARRANZA JIMENEZ FRANKLIN GEOVANNY</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'CHAVEZ GOMEZCUELLO MARIO JAVIER')"><span class="d-dot"></span>CHAVEZ GOMEZCUELLO MARIO JAVIER</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'GONZALEZ CORTEZ ADOLFO MODESTO')"><span class="d-dot"></span>GONZALEZ CORTEZ ADOLFO MODESTO</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'GUILLERMO MONTANO LUIS AGUSTIN')"><span class="d-dot"></span>GUILLERMO MONTANO LUIS AGUSTIN</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'JARA LLIGUIN JULIO LEONARDO')"><span class="d-dot"></span>JARA LLIGUIN JULIO LEONARDO</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'MENDOZA JIMENEZ VICTOR DARIO')"><span class="d-dot"></span>MENDOZA JIMENEZ VICTOR DARIO</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'MILLAN CARVAJAL RAFAEL ENRIQUE')"><span class="d-dot"></span>MILLAN CARVAJAL RAFAEL ENRIQUE</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'MORAN BARROS GABRIEL EPIFANIO')"><span class="d-dot"></span>MORAN BARROS GABRIEL EPIFANIO</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'MOSQUERA MEDINA HECTOR DANIEL')"><span class="d-dot"></span>MOSQUERA MEDINA HECTOR DANIEL</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'OLAYA ACURIO JOSE GABRIEL')"><span class="d-dot"></span>OLAYA ACURIO JOSE GABRIEL</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'ORTEGA URGILES CELIO ISAIAS')"><span class="d-dot"></span>ORTEGA URGILES CELIO ISAIAS</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'QUINONEZ AYALA JEFFERSON JAVIER')"><span class="d-dot"></span>QUINONEZ AYALA JEFFERSON JAVIER</div>
-        <div class="dropdown-item" onclick="seleccionarCobrador(this,'VILLARREAL NAVARRETE FAUSTO ALBERTO')"><span class="d-dot"></span>VILLARREAL NAVARRETE FAUSTO ALBERTO</div>
-      </div>
-    </div>
-    <input type="hidden" id="nombre" value="">
-
-    <div class="divider"><span>ACCIONES</span></div>
-
-    <div class="btn-group">
-      <button class="btn-start" onclick="pedirConfirmacion('iniciarGPS')">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" opacity=".4"/>
-          <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
-          <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
-        </svg>
-        INICIAR GPS
-      </button>
-
-      <div class="btn-row">
-        <button class="btn-lunch-start" onclick="pedirConfirmacion('inicioAlmuerzo')">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-            <line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
-          </svg>
-          INICIO<br>ALMUERZO
-        </button>
-        <button class="btn-lunch-end" onclick="pedirConfirmacion('finAlmuerzo')">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          FIN<br>ALMUERZO
-        </button>
-      </div>
-
-      <button class="btn-stop" onclick="pedirConfirmacion('finalizarRutaGPS')">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-        </svg>
-        FINALIZAR RUTA GPS
-      </button>
-    </div>
-
-    <div class="status-bar" id="statusBar">
-      <div class="status-dot" id="statusDot"></div>
-      <div class="status-body">
-        <div class="status-label">ESTADO ACTUAL</div>
-        <div class="status-value c-espera" id="statusValue">EN ESPERA</div>
-      </div>
-    </div>
-
-  </div>
-
-  <div id="cola-info">📦 <span id="cola-count">0</span> acción(es) pendiente(s) de sincronizar</div>
-
-  <div class="toast" id="toast"></div>
-
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-box">
-      <div class="modal-icon" id="modalIcon">📍</div>
-      <div class="modal-title">Confirmar acción</div>
-      <div class="modal-action" id="modalAction">—</div>
-      <div class="modal-name" id="modalName">—</div>
-      <div class="modal-btns">
-        <button class="modal-cancel" onclick="cerrarModal()">✕ Cancelar</button>
-        <button class="modal-confirm" id="modalConfirmBtn" onclick="ejecutarAccion()">✓ Confirmar</button>
-      </div>
+  <!-- MAP -->
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="alertas-overlay"></div>
+    <div id="map-legend">
+      <div class="legend-item"><div class="leg-dot" style="background:#00e676"></div> Trabajando</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> Almuerzo</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> Finalizado</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#3d5a7a"></div> Sin GPS</div>
+      <div style="height:6px;border-top:1px solid #1a3050;margin:6px 0;"></div>
+      <div class="legend-item" style="font-size:10px;color:#3d5a7a;letter-spacing:1px;">PUNTOS DE EVENTO</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#00e676"></div> 🟢 Inicio Sesión</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> ☕ Inicio Almuerzo</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ffd600"></div> ✅ Fin Almuerzo</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> 🏁 Fin Ruta</div>
     </div>
   </div>
 
-  <script>
-    // ── Service Worker (PWA offline) ──────────────────────
-    if ('serviceWorker' in navigator) {
-      var swCode = `
-        var CACHE = 'gps-cob-v1';
-        var URLS  = [location.href];
-        self.addEventListener('install', function(e) {
-          e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(URLS); }));
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', function(e) {
-          e.waitUntil(clients.claim());
-        });
-        self.addEventListener('fetch', function(e) {
-          e.respondWith(
-            fetch(e.request).catch(function(){
-              return caches.match(e.request);
-            })
-          );
-        });
-      `;
-      var swBlob = new Blob([swCode], {type: 'application/javascript'});
-      navigator.serviceWorker.register(URL.createObjectURL(swBlob))
-        .catch(function(){});
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal borrar datos -->
+<div id="modal-borrar" style="
+  position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  backdrop-filter:blur(6px);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="
+    background:#0f1928;border:1px solid #ff1744;border-radius:16px;
+    padding:30px 24px;width:100%;max-width:340px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.8);text-align:center;
+    font-family:'Rajdhani',sans-serif;">
+    <div style="font-size:44px;margin-bottom:14px;">🗑</div>
+    <div style="font-size:11px;letter-spacing:3px;color:#3d5a7a;text-transform:uppercase;margin-bottom:10px;">Confirmar acción</div>
+    <div style="font-size:20px;font-weight:700;letter-spacing:2px;color:#ff1744;margin-bottom:10px;">BORRAR TODOS LOS DATOS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#3d5a7a;margin-bottom:26px;line-height:1.6;">
+      Se eliminarán todos los registros<br>de cobradores y puntos GPS.<br>Esta acción no se puede deshacer.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <button onclick="cerrarModalBorrar()" style="
+        height:50px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+        letter-spacing:1.5px;text-transform:uppercase;background:transparent;
+        border:1px solid #1a3050;border-radius:8px;color:#3d5a7a;cursor:pointer;">
+        ✕ Cancelar
+      </button>
+      <button onclick="borrarTodosLosDatos()" style="
+        height:50px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+        letter-spacing:1.5px;text-transform:uppercase;
+        background:linear-gradient(135deg,#880015,#ff1744);
+        border:none;border-radius:8px;color:#fff;cursor:pointer;">
+        🗑 Borrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Firebase ──────────────────────────────────────────────────────
+var firebaseConfig = {
+  apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+  authDomain: "gps-cobradores.firebaseapp.com",
+  databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+  projectId: "gps-cobradores"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+
+// ── Mapa ──────────────────────────────────────────────────────────
+var map = L.map('map', { zoomControl: true }).setView([-2.17, -79.90], 12);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap © CARTO'
+}).addTo(map);
+
+// ── Iconos personalizados para posición actual ────────────────────
+function crearIcono(color) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:18px;height:18px;border-radius:50%;
+      background:${color};
+      border:3px solid #fff;
+      box-shadow:0 0 12px ${color}, 0 2px 8px rgba(0,0,0,0.45);
+    "></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -12]
+  });
+}
+
+// ── Iconos para puntos de evento ──────────────────────────────────
+var CONFIG_EVENTOS = {
+  trabajando:   { color: '#00c853', bg: '#0a2a10', emoji: '🟢', label: 'INICIO SESIÓN'    },
+  almuerzo:     { color: '#ff9100', bg: '#2a1200', emoji: '☕', label: 'INICIO ALMUERZO'  },
+  fin_almuerzo: { color: '#e6b800', bg: '#1a1200', emoji: '✅', label: 'FIN ALMUERZO'     },
+  finalizado:   { color: '#ff1744', bg: '#1a0008', emoji: '🏁', label: 'FIN RUTA'         }
+};
+
+function crearIconoEvento(tipo) {
+  var cfg = CONFIG_EVENTOS[tipo] || { color: '#00c6ff', bg: '#001a2a', emoji: '📍', label: tipo };
+  return L.divIcon({
+    className: '',
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+        <div style="
+          background:${cfg.bg};
+          border:2px solid ${cfg.color};
+          border-radius:6px;
+          padding:4px 9px;
+          font-family:Arial,sans-serif;
+          font-size:11px;
+          font-weight:700;
+          color:${cfg.color};
+          letter-spacing:1px;
+          white-space:nowrap;
+          box-shadow:0 3px 12px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.15);
+          margin-bottom:3px;
+          text-shadow:0 1px 2px rgba(0,0,0,0.8);
+        ">${cfg.emoji} ${cfg.label}</div>
+        <div style="
+          width:14px;height:14px;border-radius:50%;
+          background:${cfg.color};
+          border:2.5px solid #fff;
+          box-shadow:0 0 10px ${cfg.color}, 0 2px 6px rgba(0,0,0,0.4);
+        "></div>
+        <div style="
+          width:2px;height:9px;
+          background:${cfg.color};
+          opacity:0.8;
+          box-shadow:0 0 4px ${cfg.color};
+        "></div>
+      </div>`,
+    iconSize: [110, 54],
+    iconAnchor: [55, 54],
+    popupAnchor: [0, -56]
+  });
+}
+
+var ICONOS = {
+  trabajando: crearIcono('#00e676'),
+  almuerzo:   crearIcono('#ff9100'),
+  finalizado: crearIcono('#ff1744'),
+  default:    crearIcono('#3d5a7a')
+};
+
+// ── Estado global ─────────────────────────────────────────────────
+var marcadores      = {};
+var marcadoresPuntos = {};
+var ultimaPosicion  = {};
+var tiempoParado    = {};
+var datosCob        = {};
+var datosPuntos     = {}; // datos crudos de puntos de evento por cobrador
+var vistaActual     = 'mapa';
+
+// ── Reloj ─────────────────────────────────────────────────────────
+function tick() {
+  document.getElementById('clock-top').textContent = new Date().toLocaleTimeString('es-EC');
+}
+setInterval(tick, 1000); tick();
+
+// ── Toast ─────────────────────────────────────────────────────────
+var toastTimer;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Listener puntos de evento ─────────────────────────────────────
+db.ref("puntos").on("value", function(snapshot) {
+  // Limpiar marcadores de puntos anteriores
+  for (var nb in marcadoresPuntos) {
+    for (var ev in marcadoresPuntos[nb]) {
+      map.removeLayer(marcadoresPuntos[nb][ev]);
+    }
+  }
+  marcadoresPuntos = {};
+  datosPuntos = snapshot.val() || {}; // guardar datos crudos para Excel
+
+  var datos = datosPuntos;
+  for (var nombre in datos) {
+    if (!esCobrador(nombre)) continue;
+    marcadoresPuntos[nombre] = {};
+    var eventos = datos[nombre];
+    for (var tipoEvento in eventos) {
+      var p = eventos[tipoEvento];
+      if (!p.latitud || !p.longitud) continue;
+      var cfg = CONFIG_EVENTOS[tipoEvento] || { color:'#00c6ff', bg:'#001a2a', emoji:'📍', label: tipoEvento };
+      var icono = crearIconoEvento(tipoEvento);
+      var marker = L.marker([p.latitud, p.longitud], { icon: icono }).addTo(map);
+      marker.bindPopup(`
+        <div class="popup-name">${nombre}</div>
+        <div class="popup-row">EVENTO &nbsp;<span>${cfg.emoji} ${cfg.label}</span></div>
+        <div class="popup-row">HORA &nbsp;&nbsp;&nbsp;<span>${p.hora || '--'}</span></div>
+        <div class="popup-row">FECHA &nbsp;&nbsp;<span>${p.fecha || '--'}</span></div>
+        <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${p.latitud.toFixed(5)}</span></div>
+        <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${p.longitud.toFixed(5)}</span></div>
+      `);
+      marcadoresPuntos[nombre][tipoEvento] = marker;
+    }
+  }
+});
+
+// ── Firebase listener posición actual ────────────────────────────
+db.ref("cobradores").on("value", function(snapshot) {
+  datosCob = snapshot.val() || {};
+  procesarDatos();
+});
+
+// Lista de cobradores válidos — solo estos se muestran
+var COBRADORES_VALIDOS = [
+  'AGUILAR CONTRERAS BYRON LUIS',
+  'CARRANZA JIMENEZ FRANKLIN GEOVANNY',
+  'CHAVEZ GOMEZCUELLO MARIO JAVIER',
+  'GONZALEZ CORTEZ ADOLFO MODESTO',
+  'GUILLERMO MONTANO LUIS AGUSTIN',
+  'JARA LLIGUIN JULIO LEONARDO',
+  'MENDOZA JIMENEZ VICTOR DARIO',
+  'MILLAN CARVAJAL RAFAEL ENRIQUE',
+  'MORAN BARROS GABRIEL EPIFANIO',
+  'MOSQUERA MEDINA HECTOR DANIEL',
+  'OLAYA ACURIO JOSE GABRIEL',
+  'ORTEGA URGILES CELIO ISAIAS',
+  'QUINONEZ AYALA JEFFERSON JAVIER',
+  'VILLARREAL NAVARRETE FAUSTO ALBERTO'
+];
+
+function esCobrador(nombre) {
+  return COBRADORES_VALIDOS.indexOf(nombre.toUpperCase()) !== -1;
+}
+
+function procesarDatos() {
+  var activos = 0, almuerzo = 0, sinGPS = 0;
+  var alertasHTML = '';
+
+  // Limpiar marcadores viejos
+  for (var n in marcadores) {
+    if (!datosCob[n]) { map.removeLayer(marcadores[n]); delete marcadores[n]; }
+  }
+
+  for (var nombre in datosCob) {
+    // ── FILTRO: ignorar campos que no sean cobradores ──
+    if (!esCobrador(nombre)) continue;
+
+    var d      = datosCob[nombre];
+    if (!d || typeof d !== 'object') continue;
+
+    var lat    = d.latitud;
+    var lon    = d.longitud;
+    var estado = d.estado || 'sin-gps';
+    var hora   = d.hora   || '--:--';
+
+    if (!lat || !lon) { sinGPS++; continue; }
+
+    if (estado === 'trabajando') activos++;
+    if (estado === 'almuerzo')   almuerzo++;
+    // Nota: finalizado NO suma a sinGPS ni activos/almuerzo (correcto)
+
+    // Marcador
+    var icono = ICONOS[estado] || ICONOS.default;
+    if (!marcadores[nombre]) {
+      marcadores[nombre] = L.marker([lat, lon], { icon: icono }).addTo(map);
+    } else {
+      marcadores[nombre].setLatLng([lat, lon]);
+      marcadores[nombre].setIcon(icono);
     }
 
-    // ── Dropdown ──────────────────────────────────────────
-    var dropdownOpen = false;
+    var fechaHoy = new Date().toLocaleDateString('es-EC');
 
-    function toggleDropdown() {
-      dropdownOpen = !dropdownOpen;
-      document.getElementById('selectBtn').classList.toggle('open', dropdownOpen);
-      document.getElementById('customDropdown').classList.toggle('open', dropdownOpen);
-    }
+    marcadores[nombre].bindPopup(`
+      <div class="popup-name">${nombre}</div>
+      <div class="popup-row">ESTADO &nbsp;<span>${estado.toUpperCase()}</span></div>
+      <div class="popup-row">FECHA &nbsp;&nbsp;<span>${d.fecha || fechaHoy}</span></div>
+      <div class="popup-row">HORA &nbsp;&nbsp;&nbsp;<span>${hora}</span></div>
+      <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${lat.toFixed(5)}</span></div>
+      <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${lon.toFixed(5)}</span></div>
+    `);
 
-    function seleccionarCobrador(el, valor) {
-      document.getElementById('nombre').value = valor;
-      var label = document.getElementById('selectLabel');
-      if (valor) {
-        label.textContent = valor;
-        label.classList.remove('placeholder');
-      } else {
-        label.textContent = '— SELECCIONAR COBRADOR —';
-        label.classList.add('placeholder');
+    // Detención
+    var pos = lat + ',' + lon;
+    if (ultimaPosicion[nombre] === pos) {
+      if (!tiempoParado[nombre]) tiempoParado[nombre] = Date.now();
+      var mins = (Date.now() - tiempoParado[nombre]) / 60000;
+      if (mins > 20) {
+        alertasHTML += `<div class="alerta-chip">⚠ ${nombre} · ${Math.floor(mins)} min sin movimiento</div>`;
       }
-      document.querySelectorAll('.dropdown-item').forEach(function(i){ i.classList.remove('selected'); });
-      el.classList.add('selected');
-      dropdownOpen = false;
-      document.getElementById('selectBtn').classList.remove('open');
-      document.getElementById('customDropdown').classList.remove('open');
+    } else {
+      ultimaPosicion[nombre] = pos;
+      tiempoParado[nombre]   = Date.now();
+    }
+  }
+
+  // Contar cobradores válidos que no tienen datos en Firebase (nunca enviaron GPS)
+  COBRADORES_VALIDOS.forEach(function(nb) {
+    if (!datosCob[nb]) sinGPS++;
+  });
+
+  document.getElementById('cnt-activos').textContent = activos;
+  document.getElementById('cnt-almuerzo').textContent = almuerzo;
+  document.getElementById('cnt-sin').textContent = sinGPS;
+  document.getElementById('alertas-overlay').innerHTML = alertasHTML;
+
+  renderLista('');
+}
+
+// ── Lista sidebar ─────────────────────────────────────────────────
+function renderLista(filtro) {
+  var container = document.getElementById('cobrador-list');
+  container.innerHTML = '';
+
+  var nombres = COBRADORES_VALIDOS.slice().sort();
+
+  nombres.forEach(function(nombre) {
+    if (filtro && !nombre.toLowerCase().includes(filtro.toLowerCase())) return;
+
+    var d        = datosCob[nombre] || null;
+    var estado   = d ? (d.estado || 'sin-gps') : 'sin-gps';
+    var hora     = d ? (d.hora   || '--:--')   : '--:--';
+    var hoy      = new Date().toLocaleDateString('es-EC');
+    var fecha    = d ? (d.fecha  || (d.hora ? hoy : '')) : '';
+    var lat      = d ? d.latitud  : null;
+    var lon      = d ? d.longitud : null;
+    var tieneGPS = lat && lon;
+
+    var alertaHTML = '';
+    var pos = lat + ',' + lon;
+    if (tieneGPS && ultimaPosicion[nombre] === pos && tiempoParado[nombre]) {
+      var mins = (Date.now() - tiempoParado[nombre]) / 60000;
+      if (mins > 20) alertaHTML = `<div class="c-alert">⚠ ${Math.floor(mins)} min detenido</div>`;
     }
 
-    document.addEventListener('click', function(e) {
-      if (dropdownOpen) {
-        var wrap = document.getElementById('selectWrap');
-        if (wrap && !wrap.contains(e.target)) {
-          dropdownOpen = false;
-          document.getElementById('selectBtn').classList.remove('open');
-          document.getElementById('customDropdown').classList.remove('open');
+    var cls  = tieneGPS ? estado : 'sin-gps';
+    var pill = tieneGPS
+      ? `<span class="estado-pill pill-${estado}">${estado}</span>`
+      : `<span class="estado-pill pill-sin-gps">sin gps</span>`;
+
+    var fechaHTML = fecha ? `<div class="c-fecha">${fecha}</div>` : '';
+
+    var card = document.createElement('div');
+    card.className = `cobrador-card ${cls}`;
+    card.innerHTML = `
+      <div class="c-name">${nombre}</div>
+      <div class="c-meta">
+        ${pill}
+        <span class="c-hora">${hora}</span>
+      </div>
+      ${fechaHTML}
+      ${alertaHTML}
+    `;
+
+    if (tieneGPS) {
+      card.onclick = function() {
+        map.flyTo([lat, lon], 16, { duration: 1 });
+        if (marcadores[nombre]) marcadores[nombre].openPopup();
+        showToast('📍 ' + nombre);
+      };
+    }
+
+    container.appendChild(card);
+  });
+
+  if (container.children.length === 0) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">SIN RESULTADOS</div>';
+  }
+}
+
+function filtrarLista(val) { renderLista(val); }
+
+// ── Vistas nav ────────────────────────────────────────────────────
+function setView(vista, btn) {
+  vistaActual = vista;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  var search = document.getElementById('search');
+
+  if (vista === 'mapa') {
+    search.value = '';
+    renderLista('');
+    var lats = [], lons = [];
+    for (var n in marcadores) {
+      var ll = marcadores[n].getLatLng();
+      lats.push(ll.lat); lons.push(ll.lng);
+    }
+    if (lats.length > 0) {
+      map.fitBounds([[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]], { padding: [40, 40] });
+    }
+  }
+
+  if (vista === 'activos') {
+    var activos = Object.keys(datosCob).filter(function(n){ return esCobrador(n) && datosCob[n].estado === 'trabajando'; });
+    search.value = '';
+    var container = document.getElementById('cobrador-list');
+    container.innerHTML = '';
+    activos.forEach(function(nombre) {
+      var d = datosCob[nombre];
+      var card = document.createElement('div');
+      card.className = 'cobrador-card trabajando';
+      card.innerHTML = `
+        <div class="c-name">${nombre}</div>
+        <div class="c-meta">
+          <span class="estado-pill pill-trabajando">trabajando</span>
+          <span class="c-hora">${d.hora || '--:--'}</span>
+        </div>
+        ${(d.fecha || d.hora) ? '<div class="c-fecha">'+(d.fecha || new Date().toLocaleDateString('es-EC'))+'</div>' : ''}`;
+      if (d.latitud) card.onclick = () => { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); marcadores[nombre] && marcadores[nombre].openPopup(); };
+      container.appendChild(card);
+    });
+    if (!activos.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">NINGUNO ACTIVO</div>';
+    showToast(`🟢 ${activos.length} cobradores activos`);
+  }
+
+  if (vista === 'sin-gps') {
+    var sinGPS = COBRADORES_VALIDOS.filter(function(n){ return !datosCob[n] || !datosCob[n].latitud; });
+    var container = document.getElementById('cobrador-list');
+    container.innerHTML = '';
+    sinGPS.forEach(function(nombre) {
+      var d = datosCob[nombre] || null;
+      var card = document.createElement('div');
+      card.className = 'cobrador-card sin-gps';
+      card.innerHTML = `
+        <div class="c-name">${nombre}</div>
+        <div class="c-meta"><span class="estado-pill pill-sin-gps">sin gps</span></div>
+        ${d && d.fecha ? '<div class="c-fecha">'+d.fecha+'</div>' : ''}`;
+      container.appendChild(card);
+    });
+    if (!sinGPS.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">TODOS TIENEN GPS ✓</div>';
+    showToast(`🔴 ${sinGPS.length} sin GPS`);
+  }
+
+  if (vista === 'detenciones') {
+    var container = document.getElementById('cobrador-list');
+    container.innerHTML = '';
+    var encontrados = 0;
+    for (var nombre in datosCob) {
+      if (!esCobrador(nombre)) continue;
+      var d = datosCob[nombre];
+      if (!d.latitud) continue;
+      var pos = d.latitud + ',' + d.longitud;
+      if (ultimaPosicion[nombre] === pos && tiempoParado[nombre]) {
+        var mins = (Date.now() - tiempoParado[nombre]) / 60000;
+        if (mins > 20) {
+          encontrados++;
+          var card = document.createElement('div');
+          card.className = 'cobrador-card finalizado';
+          card.innerHTML = `
+            <div class="c-name">${nombre}</div>
+            <div class="c-meta">
+              <span class="estado-pill pill-finalizado">⚠ detenido</span>
+              <span class="c-hora">${Math.floor(mins)} min</span>
+            </div>
+            ${(d.fecha || d.hora) ? '<div class="c-fecha">'+(d.fecha || new Date().toLocaleDateString('es-EC'))+'</div>' : ''}`;
+          card.onclick = () => { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); };
+          container.appendChild(card);
         }
       }
-    });
-
-    // ── Firebase ──────────────────────────────────────────
-    var firebaseConfig = {
-      apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-      authDomain: "gps-cobradores.firebaseapp.com",
-      databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-      projectId: "gps-cobradores"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
-
-    var intervaloGPS    = null;
-    var accionPendiente = null;
-
-    // ── Cola offline ──────────────────────────────────────
-    // Guardamos acciones pendientes en localStorage cuando no hay red
-    var COLA_KEY = 'gps_cola_pendiente';
-
-    function cargarCola() {
-      try { return JSON.parse(localStorage.getItem(COLA_KEY) || '[]'); } catch(e) { return []; }
     }
-    function guardarCola(cola) {
-      try { localStorage.setItem(COLA_KEY, JSON.stringify(cola)); } catch(e) {}
-    }
-    function actualizarColaUI() {
-      var cola = cargarCola();
-      var el = document.getElementById('cola-info');
-      var cnt = document.getElementById('cola-count');
-      if (cola.length > 0) {
-        cnt.textContent = cola.length;
-        el.classList.add('show');
-      } else {
-        el.classList.remove('show');
-      }
-    }
+    if (!encontrados) container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">SIN DETENCIONES</div>';
+    showToast(`⚠ ${encontrados} detenidos`);
+  }
+}
 
-    function agregarACola(nombre, estado, lat, lon) {
-      var cola = cargarCola();
-      cola.push({
-        nombre: nombre, estado: estado,
-        hora: new Date().toLocaleTimeString('es-EC'),
-        fecha: new Date().toLocaleDateString('es-EC'),
-        lat: lat, lon: lon, ts: Date.now()
-      });
-      guardarCola(cola);
-      actualizarColaUI();
-    }
+// ── Borrar todos los datos ────────────────────────────────────────
+function confirmarBorrar() {
+  var m = document.getElementById('modal-borrar');
+  m.style.display = 'flex';
+}
+function cerrarModalBorrar() {
+  var m = document.getElementById('modal-borrar');
+  m.style.display = 'none';
+}
+function borrarTodosLosDatos() {
+  cerrarModalBorrar();
+  // Borrar cobradores y puntos de Firebase
+  db.ref('cobradores').remove();
+  db.ref('puntos').remove();
+  // Limpiar marcadores del mapa
+  for (var n in marcadores) { map.removeLayer(marcadores[n]); }
+  marcadores = {};
+  for (var nb in marcadoresPuntos) {
+    for (var ev in marcadoresPuntos[nb]) { map.removeLayer(marcadoresPuntos[nb][ev]); }
+  }
+  marcadoresPuntos = {};
+  datosCob = {};
+  datosPuntos = {};
+  ultimaPosicion = {};
+  tiempoParado = {};
+  document.getElementById('cnt-activos').textContent = '0';
+  document.getElementById('cnt-almuerzo').textContent = '0';
+  document.getElementById('cnt-sin').textContent = '0';
+  document.getElementById('alertas-overlay').innerHTML = '';
+  renderLista('');
+  showToast('🗑 Todos los datos borrados');
+}
 
-    function sincronizarCola() {
-      var cola = cargarCola();
-      if (cola.length === 0) return;
-      var pendientes = cola.slice();
-      guardarCola([]);
-      actualizarColaUI();
-      pendientes.forEach(function(item) {
-        var datos = { estado: item.estado, hora: item.hora, fecha: item.fecha || '' };
-        if (item.lat) { datos.latitud = item.lat; datos.longitud = item.lon; }
-        db.ref('cobradores/' + item.nombre).update(datos)
-          .catch(function() {
-            agregarACola(item.nombre, item.estado, item.lat, item.lon);
-          });
-      });
-      if (pendientes.length > 0) showToast('☁ ' + pendientes.length + ' acción(es) sincronizadas');
-    }
+// ── Excel ─────────────────────────────────────────────────────────
+function descargarExcel() {
+  var BOM = '\uFEFF'; // para que Excel abra bien tildes y ñ
+  var headers = [
+    'COBRADOR',
+    'ESTADO ACTUAL',
+    'FECHA',
+    'HORA ÚLTIMA POSICIÓN',
+    'HORA INICIO SESIÓN',
+    'HORA INICIO ALMUERZO',
+    'HORA FIN ALMUERZO',
+    'HORA FIN RUTA',
+    'LATITUD',
+    'LONGITUD'
+  ];
+  var csv = BOM + headers.join(',') + '\n';
 
-    // ── Conectividad ──────────────────────────────────────
-    function actualizarConexion() {
-      var online = navigator.onLine;
-      document.getElementById('offline-banner').classList.toggle('show', !online);
-      document.getElementById('conn-badge').textContent = online ? 'SISTEMA GPS · ACTIVO' : 'SISTEMA GPS · OFFLINE';
-      if (online) { sincronizarCola(); sincronizarPuntosCola(); }
-    }
+  COBRADORES_VALIDOS.forEach(function(nombre) {
+    var d  = datosCob[nombre]    || {};
+    var pt = datosPuntos[nombre] || {};
 
-    window.addEventListener('online',  actualizarConexion);
-    window.addEventListener('offline', actualizarConexion);
-    actualizarConexion();
+    var hoy = new Date().toLocaleDateString('es-EC');
 
-    // Firebase también detecta conexión
-    db.ref('.info/connected').on('value', function(snap) {
-      if (snap.val() === true) sincronizarCola();
-    });
+    var fila = [
+      nombre,
+      d.estado   || 'SIN GPS',
+      d.fecha    || (d.hora ? hoy : ''),
+      d.hora     || '',
+      (pt.trabajando   && pt.trabajando.hora)   || '',
+      (pt.almuerzo     && pt.almuerzo.hora)     || '',
+      (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '',
+      (pt.finalizado   && pt.finalizado.hora)   || '',
+      d.latitud  || '',
+      d.longitud || ''
+    ];
 
-    // ── Reloj ─────────────────────────────────────────────
-    setInterval(function(){
-      document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
-    }, 1000);
-    document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
+    // Envolver campos con comas en comillas
+    csv += fila.map(function(v) {
+      return String(v).indexOf(',') !== -1 ? '"' + v + '"' : v;
+    }).join(',') + '\n';
+  });
 
-    // ── Toast ─────────────────────────────────────────────
-    var toastTimer;
-    function showToast(msg) {
-      var t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
-    }
-
-    // ── Estado visual ─────────────────────────────────────
-    var ESTADOS = {
-      active: { dot:'active', bar:'s-trabajando', val:'c-trabajando', txt:'TRABAJANDO'      },
-      lunch:  { dot:'lunch',  bar:'s-almorzando', val:'c-almorzando', txt:'ALMORZANDO'      },
-      done:   { dot:'done',   bar:'s-finalizado', val:'c-finalizado', txt:'RUTA FINALIZADA' },
-      espera: { dot:'',       bar:'',             val:'c-espera',     txt:'EN ESPERA'       }
-    };
-    function setStatus(type) {
-      var cfg = ESTADOS[type] || ESTADOS.espera;
-      document.getElementById('statusDot').className    = 'status-dot '   + cfg.dot;
-      document.getElementById('statusBar').className    = 'status-bar '   + cfg.bar;
-      document.getElementById('statusValue').className  = 'status-value ' + cfg.val;
-      document.getElementById('statusValue').textContent = cfg.txt;
-    }
-
-    // ── Modal ─────────────────────────────────────────────
-    var ACCIONES = {
-      iniciarGPS:       { icon:'📍', label:'Iniciar GPS',        color:'#00e676', colorDark:'#007a38' },
-      inicioAlmuerzo:   { icon:'☕', label:'Inicio Almuerzo',    color:'#ff9100', colorDark:'#a04000' },
-      finAlmuerzo:      { icon:'✅', label:'Fin Almuerzo',       color:'#ffd600', colorDark:'#907000' },
-      finalizarRutaGPS: { icon:'🏁', label:'Finalizar Ruta GPS', color:'#ff1744', colorDark:'#880015' }
-    };
-
-    function pedirConfirmacion(accion) {
-      var nombre = document.getElementById('nombre').value;
-      if (!nombre) { showToast('⚠ Selecciona un cobrador primero'); return; }
-      var cfg = ACCIONES[accion];
-      document.getElementById('modalIcon').textContent   = cfg.icon;
-      document.getElementById('modalAction').textContent = cfg.label;
-      document.getElementById('modalAction').style.color = cfg.color;
-      document.getElementById('modalName').textContent   = nombre;
-      document.getElementById('modalConfirmBtn').style.background =
-        'linear-gradient(135deg,' + cfg.colorDark + ',' + cfg.color + ')';
-      document.getElementById('modalConfirmBtn').style.color =
-        accion === 'finAlmuerzo' ? '#1a1200' : '#fff';
-      accionPendiente = accion;
-      document.getElementById('modalOverlay').classList.add('show');
-    }
-
-    function cerrarModal() {
-      document.getElementById('modalOverlay').classList.remove('show');
-      accionPendiente = null;
-    }
-
-    function ejecutarAccion() {
-      var a = accionPendiente;
-      cerrarModal();
-      if      (a === 'iniciarGPS')       _iniciarGPS();
-      else if (a === 'inicioAlmuerzo')   _inicioAlmuerzo();
-      else if (a === 'finAlmuerzo')      _finAlmuerzo();
-      else if (a === 'finalizarRutaGPS') _finalizarRutaGPS();
-    }
-
-    document.getElementById('modalOverlay').addEventListener('click', function(e){
-      if (e.target === this) cerrarModal();
-    });
-
-    // ── Guardar punto de evento en Firebase ──────────────
-    var EVENTOS = {
-      'trabajando':  { emoji: '🟢', label: 'INICIO SESIÓN' },
-      'almuerzo':    { emoji: '☕', label: 'INICIO ALMUERZO' },
-      'fin_almuerzo':{ emoji: '✅', label: 'FIN ALMUERZO' },
-      'finalizado':  { emoji: '🏁', label: 'FIN RUTA' }
-    };
-
-    function guardarPunto(nombre, tipoEvento, lat, lon) {
-      var hora  = new Date().toLocaleTimeString('es-EC');
-      var fecha = new Date().toLocaleDateString('es-EC');
-      var ev    = EVENTOS[tipoEvento] || { emoji: '📍', label: tipoEvento.toUpperCase() };
-      var dato  = { evento: tipoEvento, label: ev.label, hora: hora, fecha: fecha };
-      if (lat) { dato.latitud = lat; dato.longitud = lon; }
-
-      var keyEvento = tipoEvento; // clave fija por tipo: solo 1 por evento por día
-      if (navigator.onLine) {
-        db.ref('puntos/' + nombre + '/' + keyEvento).set(dato);
-      } else {
-        // Guardar en cola offline
-        try {
-          var colaPuntos = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
-          colaPuntos.push({ nombre: nombre, keyEvento: keyEvento, dato: dato });
-          localStorage.setItem('gps_puntos_cola', JSON.stringify(colaPuntos));
-        } catch(e) {}
-      }
-    }
-
-    function sincronizarPuntosCola() {
-      try {
-        var cola = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
-        if (!cola.length) return;
-        localStorage.removeItem('gps_puntos_cola');
-        cola.forEach(function(item) {
-          db.ref('puntos/' + item.nombre + '/' + item.keyEvento).set(item.dato);
-        });
-      } catch(e) {}
-    }
-
-    // ── Enviar GPS (con soporte offline) ──────────────────
-    function enviarGPS(estado, statusKey, tipoEvento) {
-      var nombre = document.getElementById('nombre').value;
-      setStatus(statusKey);
-
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          var lat  = pos.coords.latitude;
-          var lon  = pos.coords.longitude;
-          var hora = new Date().toLocaleTimeString('es-EC');
-          var fecha = new Date().toLocaleDateString('es-EC');
-          var datos = { estado: estado, hora: hora, fecha: fecha, latitud: lat, longitud: lon };
-          if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).set(datos)
-              .catch(function(){ agregarACola(nombre, estado, lat, lon); });
-          } else {
-            agregarACola(nombre, estado, lat, lon);
-          }
-          // Guardar punto de evento
-          if (tipoEvento) guardarPunto(nombre, tipoEvento, lat, lon);
-        },
-        function() {
-          var hora = new Date().toLocaleTimeString('es-EC');
-          var fecha = new Date().toLocaleDateString('es-EC');
-          if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).update({ estado: estado, hora: hora, fecha: fecha })
-              .catch(function(){ agregarACola(nombre, estado, null, null); });
-          } else {
-            agregarACola(nombre, estado, null, null);
-          }
-          if (tipoEvento) guardarPunto(nombre, tipoEvento, null, null);
-        },
-        { timeout: 10000, maximumAge: 30000, enableHighAccuracy: true }
-      );
-    }
-
-    function _iniciarGPS() {
-      if (intervaloGPS) clearInterval(intervaloGPS);
-      showToast('✓ GPS iniciado correctamente');
-      enviarGPS('trabajando', 'active', 'trabajando');
-      intervaloGPS = setInterval(function(){ enviarGPS('trabajando', 'active', null); }, 60000);
-    }
-
-    function _inicioAlmuerzo() {
-      showToast('☕ Inicio de almuerzo registrado');
-      enviarGPS('almuerzo', 'lunch', 'almuerzo');
-    }
-
-    function _finAlmuerzo() {
-      showToast('✓ Fin de almuerzo — regresó al trabajo');
-      enviarGPS('trabajando', 'active', 'fin_almuerzo');
-    }
-
-    function _finalizarRutaGPS() {
-      if (intervaloGPS) { clearInterval(intervaloGPS); intervaloGPS = null; }
-      showToast('🏁 Ruta GPS finalizada');
-      enviarGPS('finalizado', 'done', 'finalizado');
-    }
-
-    // Cargar cola al inicio
-    actualizarColaUI();
-  </script>
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url  = window.URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'reporte_cobradores_' + new Date().toLocaleDateString('es-EC').replace(/\//g,'-') + '.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+  showToast('📥 Reporte descargado');
+}
+</script>
 </body>
 </html>
