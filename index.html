@@ -426,10 +426,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
   <script>
     // ── Service Worker (PWA offline) ──────────────────────
     if ('serviceWorker' in navigator) {
@@ -530,7 +526,12 @@
 
     function agregarACola(nombre, estado, lat, lon) {
       var cola = cargarCola();
-      cola.push({ nombre: nombre, estado: estado, hora: new Date().toLocaleTimeString('es-EC'), lat: lat, lon: lon, ts: Date.now() });
+      cola.push({
+        nombre: nombre, estado: estado,
+        hora: new Date().toLocaleTimeString('es-EC'),
+        fecha: new Date().toLocaleDateString('es-EC'),
+        lat: lat, lon: lon, ts: Date.now()
+      });
       guardarCola(cola);
       actualizarColaUI();
     }
@@ -542,11 +543,10 @@
       guardarCola([]);
       actualizarColaUI();
       pendientes.forEach(function(item) {
-        var datos = { estado: item.estado, hora: item.hora };
+        var datos = { estado: item.estado, hora: item.hora, fecha: item.fecha || '' };
         if (item.lat) { datos.latitud = item.lat; datos.longitud = item.lon; }
         db.ref('cobradores/' + item.nombre).update(datos)
           .catch(function() {
-            // Si falla de nuevo, volver a la cola
             agregarACola(item.nombre, item.estado, item.lat, item.lon);
           });
       });
@@ -692,7 +692,8 @@
           var lat  = pos.coords.latitude;
           var lon  = pos.coords.longitude;
           var hora = new Date().toLocaleTimeString('es-EC');
-          var datos = { estado: estado, hora: hora, latitud: lat, longitud: lon };
+          var fecha = new Date().toLocaleDateString('es-EC');
+          var datos = { estado: estado, hora: hora, fecha: fecha, latitud: lat, longitud: lon };
           if (navigator.onLine) {
             db.ref('cobradores/' + nombre).set(datos)
               .catch(function(){ agregarACola(nombre, estado, lat, lon); });
@@ -704,8 +705,9 @@
         },
         function() {
           var hora = new Date().toLocaleTimeString('es-EC');
+          var fecha = new Date().toLocaleDateString('es-EC');
           if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).update({ estado: estado, hora: hora })
+            db.ref('cobradores/' + nombre).update({ estado: estado, hora: hora, fecha: fecha })
               .catch(function(){ agregarACola(nombre, estado, null, null); });
           } else {
             agregarACola(nombre, estado, null, null);
