@@ -12,22 +12,12 @@
 
   <script>
     var manifest = {
-      name: "GPS Cobradores",
-      short_name: "GPS Cob",
-      start_url: ".",
-      display: "standalone",
-      background_color: "#080d18",
-      theme_color: "#080d18",
-      icons: [{
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23080d18'/%3E%3Ccircle cx='96' cy='96' r='30' fill='%2300c6ff'/%3E%3Ccircle cx='96' cy='96' r='55' fill='none' stroke='%2300c6ff' stroke-width='8' opacity='.4'/%3E%3Cline x1='96' y1='20' x2='96' y2='46' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='96' y1='146' x2='96' y2='172' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='20' y1='96' x2='46' y2='96' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3Cline x1='146' y1='96' x2='172' y2='96' stroke='%2300c6ff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
-        sizes: "192x192",
-        type: "image/svg+xml"
-      }]
+      name: "GPS Cobradores", short_name: "GPS Cob", start_url: ".", display: "standalone",
+      background_color: "#080d18", theme_color: "#080d18",
+      icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23080d18'/%3E%3Ccircle cx='96' cy='96' r='30' fill='%2300c6ff'/%3E%3Ccircle cx='96' cy='96' r='55' fill='none' stroke='%2300c6ff' stroke-width='8' opacity='.4'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }]
     };
-    var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    var link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = URL.createObjectURL(blob);
+    var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    var link = document.createElement('link'); link.rel='manifest'; link.href=URL.createObjectURL(blob);
     document.head.appendChild(link);
   </script>
 
@@ -36,306 +26,217 @@
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
-    @font-face {
-      font-family: 'Rajdhani';
-      font-weight: 700;
-      src: local('Arial Black'), local('Impact');
-    }
-
     :root {
-      --bg:     #080d18;
-      --panel:  #0f1928;
-      --border: #1e3a5f;
-      --accent: #00c6ff;
-      --green:  #00e676;
-      --orange: #ff9100;
-      --red:    #ff1744;
-      --yellow: #ffd600;
-      --text:   #e8f0ff;
-      --muted:  #4a6080;
+      --bg:#080d18; --panel:#0f1928; --border:#1e3a5f;
+      --accent:#00c6ff; --green:#00e676; --orange:#ff9100;
+      --red:#ff1744; --yellow:#ffd600; --text:#e8f0ff; --muted:#4a6080;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; overflow-x: hidden; }
-
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    html,body { height:100%; overflow-x:hidden; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px 14px 40px;
+      background:var(--bg); color:var(--text);
+      font-family:'Rajdhani','Arial Black',sans-serif;
+      min-height:100vh; display:flex; flex-direction:column; align-items:center;
+      padding:20px 14px 40px;
       background-image:
         radial-gradient(ellipse at 15% 10%, rgba(0,114,255,0.1) 0%, transparent 55%),
         radial-gradient(ellipse at 85% 85%, rgba(0,198,255,0.07) 0%, transparent 50%);
     }
 
     #offline-banner {
-      display: none;
-      width: 100%; max-width: 500px;
-      background: rgba(255,145,0,0.15);
-      border: 1px solid rgba(255,145,0,0.4);
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 13px; font-weight: 700; letter-spacing: 1px;
-      color: var(--orange); text-align: center; margin-bottom: 12px;
+      display:none; width:100%; max-width:500px;
+      background:rgba(255,145,0,0.15); border:1px solid rgba(255,145,0,0.4);
+      border-radius:8px; padding:10px 16px; font-size:13px; font-weight:700;
+      letter-spacing:1px; color:var(--orange); text-align:center; margin-bottom:12px;
     }
-    #offline-banner.show { display: block; }
+    #offline-banner.show { display:block; }
 
-    .header { width: 100%; max-width: 500px; text-align: center; margin-bottom: 18px; }
+    /* Barra de recorrido activo */
+    #gps-track-info {
+      display:none; width:100%; max-width:500px;
+      background:rgba(0,230,118,0.06); border:1px solid rgba(0,230,118,0.3);
+      border-radius:10px; padding:10px 16px; margin-bottom:10px;
+      align-items:center; justify-content:space-between; gap:10px;
+    }
+    #gps-track-info.show { display:flex; }
+    #gps-track-info .track-left { display:flex; align-items:center; gap:10px; }
+    #gps-track-info .track-dot {
+      width:10px; height:10px; border-radius:50%; background:var(--green);
+      flex-shrink:0; box-shadow:0 0 8px var(--green); animation:pulse 1.4s infinite;
+    }
+    #gps-track-info .track-label { font-size:12px; font-weight:700; letter-spacing:1px; color:var(--green); }
+    #gps-track-info .track-right { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); }
+    #gps-track-info .track-right span { color:var(--accent); font-weight:700; }
+
+    /* Próximo ping */
+    #next-ping {
+      font-family:'Share Tech Mono',monospace; font-size:11px;
+      color:var(--muted); letter-spacing:1px;
+    }
+    #next-ping b { color:var(--yellow); }
+
+    .header { width:100%; max-width:500px; text-align:center; margin-bottom:18px; }
     .badge {
-      display: inline-block;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px; letter-spacing: 4px;
-      color: var(--accent);
-      background: rgba(0,198,255,0.08);
-      border: 1px solid rgba(0,198,255,0.25);
-      border-radius: 4px; padding: 4px 12px; margin-bottom: 10px;
+      display:inline-block; font-family:'Share Tech Mono',monospace;
+      font-size:10px; letter-spacing:4px; color:var(--accent);
+      background:rgba(0,198,255,0.08); border:1px solid rgba(0,198,255,0.25);
+      border-radius:4px; padding:4px 12px; margin-bottom:10px;
     }
     .header h1 {
-      font-size: 26px; font-weight: 700;
-      letter-spacing: 3px; text-transform: uppercase; line-height: 1.15;
-      background: linear-gradient(135deg, #e8f0ff 0%, #00c6ff 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size:26px; font-weight:700; letter-spacing:3px; text-transform:uppercase; line-height:1.15;
+      background:linear-gradient(135deg,#e8f0ff 0%,#00c6ff 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     }
-    .clock {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 13px; color: var(--muted); letter-spacing: 2px; margin-top: 6px;
-    }
-
-    /* ── Indicador de recorrido activo ── */
-    #gps-track-info {
-      display: none;
-      width: 100%; max-width: 500px;
-      background: rgba(0,230,118,0.06);
-      border: 1px solid rgba(0,230,118,0.25);
-      border-radius: 8px;
-      padding: 9px 14px;
-      font-size: 12px; font-weight: 700; letter-spacing: 1px;
-      color: var(--green); text-align: center; margin-bottom: 10px;
-    }
-    #gps-track-info.show { display: flex; align-items: center; justify-content: center; gap: 10px; }
-    #gps-track-info .track-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green); flex-shrink: 0;
-      animation: pulse 1.4s infinite;
-      box-shadow: 0 0 8px var(--green);
-    }
-    @keyframes pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:0.3; transform:scale(0.75); }
-    }
+    .clock { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--muted); letter-spacing:2px; margin-top:6px; }
 
     .card {
-      width: 100%; max-width: 500px;
-      background: var(--panel); border: 1px solid var(--border);
-      border-radius: 18px; padding: 22px 18px 24px;
-      box-shadow: 0 10px 50px rgba(0,0,0,0.55);
-      overflow: visible;
+      width:100%; max-width:500px; background:var(--panel); border:1px solid var(--border);
+      border-radius:18px; padding:22px 18px 24px; box-shadow:0 10px 50px rgba(0,0,0,0.55); overflow:visible;
     }
+    .field-label { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
 
-    .field-label {
-      font-size: 10px; letter-spacing: 3px; color: var(--muted);
-      text-transform: uppercase; margin-bottom: 8px;
-    }
-
-    .custom-select-wrap { position: relative; width: 100%; user-select: none; z-index: 200; }
-
+    .custom-select-wrap { position:relative; width:100%; user-select:none; z-index:200; }
     .custom-select-btn {
-      width: 100%; padding: 16px 18px;
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      font-size: 18px; font-weight: 700; letter-spacing: 1px;
-      color: var(--text); background: rgba(0,198,255,0.05);
-      border: 1px solid var(--border); border-radius: 10px;
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: space-between; gap: 10px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      text-align: left; min-height: 58px;
+      width:100%; padding:16px 18px; font-family:'Rajdhani','Arial Black',sans-serif;
+      font-size:18px; font-weight:700; letter-spacing:1px; color:var(--text);
+      background:rgba(0,198,255,0.05); border:1px solid var(--border); border-radius:10px;
+      cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px;
+      transition:border-color 0.2s,box-shadow 0.2s; text-align:left; min-height:58px;
     }
-    .custom-select-btn.open {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0,198,255,0.15);
-    }
-    .placeholder { color: var(--muted); font-size: 15px; }
-    .arrow { width: 14px; height: 14px; flex-shrink: 0; transition: transform 0.25s; }
-    .custom-select-btn.open .arrow { transform: rotate(180deg); }
-
+    .custom-select-btn.open { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,198,255,0.15); }
+    .placeholder { color:var(--muted); font-size:15px; }
+    .arrow { width:14px; height:14px; flex-shrink:0; transition:transform 0.25s; }
+    .custom-select-btn.open .arrow { transform:rotate(180deg); }
     .custom-dropdown {
-      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-      background: #0a1525; border: 1px solid var(--accent);
-      border-radius: 12px; overflow: hidden;
-      box-shadow: 0 16px 50px rgba(0,0,0,0.85);
-      z-index: 9999; display: none;
+      position:absolute; top:calc(100% + 6px); left:0; right:0;
+      background:#0a1525; border:1px solid var(--accent); border-radius:12px; overflow:hidden;
+      box-shadow:0 16px 50px rgba(0,0,0,0.85); z-index:9999; display:none;
     }
-    .custom-dropdown.open { display: block; animation: dropIn 0.2s ease; }
-
-    @keyframes dropIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
+    .custom-dropdown.open { display:block; animation:dropIn 0.2s ease; }
+    @keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
     .dropdown-item {
-      padding: 16px 20px;
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      font-size: 17px; font-weight: 600; letter-spacing: 1px;
-      color: #8ab4d8; cursor: pointer;
-      border-bottom: 1px solid rgba(30,58,95,0.5);
-      display: flex; align-items: center; gap: 12px; min-height: 54px;
-      transition: background 0.15s, color 0.15s;
+      padding:16px 20px; font-family:'Rajdhani','Arial Black',sans-serif;
+      font-size:17px; font-weight:600; letter-spacing:1px; color:#8ab4d8; cursor:pointer;
+      border-bottom:1px solid rgba(30,58,95,0.5); display:flex; align-items:center; gap:12px;
+      min-height:54px; transition:background 0.15s,color 0.15s;
     }
-    .dropdown-item:last-child { border-bottom: none; }
-    .dropdown-item:active { background: rgba(0,198,255,0.15); color: #fff; }
-    .dropdown-item.selected { background: rgba(0,198,255,0.1); color: var(--accent); }
-    .d-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent); flex-shrink: 0; opacity: 0.4;
-    }
-    .dropdown-item.selected .d-dot { opacity: 1; box-shadow: 0 0 6px var(--accent); }
+    .dropdown-item:last-child { border-bottom:none; }
+    .dropdown-item:active { background:rgba(0,198,255,0.15); color:#fff; }
+    .dropdown-item.selected { background:rgba(0,198,255,0.1); color:var(--accent); }
+    .d-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; opacity:0.4; }
+    .dropdown-item.selected .d-dot { opacity:1; box-shadow:0 0 6px var(--accent); }
 
-    .divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 18px; }
-    .divider span { font-size: 10px; letter-spacing: 3px; color: var(--muted); white-space: nowrap; }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider { display:flex; align-items:center; gap:10px; margin:20px 0 18px; }
+    .divider span { font-size:10px; letter-spacing:3px; color:var(--muted); white-space:nowrap; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    .btn-group { display: flex; flex-direction: column; gap: 12px; }
-    .btn-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
+    .btn-group { display:flex; flex-direction:column; gap:12px; }
+    .btn-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     button {
-      position: relative; display: flex; align-items: center;
-      justify-content: center; gap: 10px; padding: 0 16px; height: 64px;
-      font-family: 'Rajdhani', 'Arial Black', sans-serif;
-      font-size: 17px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; border: none; border-radius: 12px;
-      cursor: pointer; transition: transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation; line-height: 1.2; text-align: center;
+      position:relative; display:flex; align-items:center; justify-content:center;
+      gap:10px; padding:0 16px; height:64px;
+      font-family:'Rajdhani','Arial Black',sans-serif; font-size:17px; font-weight:700;
+      letter-spacing:1.5px; text-transform:uppercase; border:none; border-radius:12px;
+      cursor:pointer; transition:transform 0.1s; -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation; line-height:1.2; text-align:center;
     }
-    button:active { transform: scale(0.94); }
-    .icon { width: 22px; height: 22px; flex-shrink: 0; }
-
-    .btn-start {
-      background: linear-gradient(135deg, #007a38, #00e676); color: #001f0e;
-      box-shadow: 0 6px 24px rgba(0,230,118,0.38); font-size: 20px; height: 72px;
-    }
-    .btn-lunch-start {
-      background: linear-gradient(135deg, #a04000, #ff9100); color: #200e00;
-      box-shadow: 0 6px 24px rgba(255,145,0,0.35);
-    }
-    .btn-lunch-end {
-      background: linear-gradient(135deg, #907000, #ffd600); color: #1a1200;
-      box-shadow: 0 6px 24px rgba(255,214,0,0.3);
-    }
-    .btn-stop {
-      background: linear-gradient(135deg, #880015, #ff1744); color: #fff;
-      box-shadow: 0 6px 24px rgba(255,23,68,0.35); font-size: 20px; height: 72px;
-    }
+    button:active { transform:scale(0.94); }
+    .icon { width:22px; height:22px; flex-shrink:0; }
+    .btn-start { background:linear-gradient(135deg,#007a38,#00e676); color:#001f0e; box-shadow:0 6px 24px rgba(0,230,118,0.38); font-size:20px; height:72px; }
+    .btn-lunch-start { background:linear-gradient(135deg,#a04000,#ff9100); color:#200e00; box-shadow:0 6px 24px rgba(255,145,0,0.35); }
+    .btn-lunch-end { background:linear-gradient(135deg,#907000,#ffd600); color:#1a1200; box-shadow:0 6px 24px rgba(255,214,0,0.3); }
+    .btn-stop { background:linear-gradient(135deg,#880015,#ff1744); color:#fff; box-shadow:0 6px 24px rgba(255,23,68,0.35); font-size:20px; height:72px; }
 
     .status-bar {
-      margin-top: 20px; background: rgba(0,0,0,0.3);
-      border: 2px solid var(--border); border-radius: 12px;
-      padding: 16px 18px; display: flex; align-items: center;
-      gap: 14px; min-height: 72px;
-      transition: border-color 0.4s, background 0.4s;
+      margin-top:20px; background:rgba(0,0,0,0.3); border:2px solid var(--border);
+      border-radius:12px; padding:16px 18px; display:flex; align-items:center;
+      gap:14px; min-height:72px; transition:border-color 0.4s,background 0.4s;
     }
-    .status-bar.s-trabajando { border-color: rgba(0,230,118,0.5); background: rgba(0,230,118,0.06); }
-    .status-bar.s-almorzando { border-color: rgba(255,145,0,0.5);  background: rgba(255,145,0,0.06); }
-    .status-bar.s-finalizado { border-color: rgba(255,23,68,0.5);  background: rgba(255,23,68,0.06); }
-
+    .status-bar.s-trabajando { border-color:rgba(0,230,118,0.5); background:rgba(0,230,118,0.06); }
+    .status-bar.s-almorzando { border-color:rgba(255,145,0,0.5);  background:rgba(255,145,0,0.06); }
+    .status-bar.s-finalizado { border-color:rgba(255,23,68,0.5);  background:rgba(255,23,68,0.06); }
     .status-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--muted); flex-shrink: 0;
-      transition: background 0.3s, box-shadow 0.3s;
+      width:14px; height:14px; border-radius:50%; background:var(--muted); flex-shrink:0;
+      transition:background 0.3s,box-shadow 0.3s;
     }
-    .status-dot.active { background: var(--green);  box-shadow: 0 0 12px var(--green);  animation: pulse 1.4s infinite; }
-    .status-dot.lunch  { background: var(--orange); box-shadow: 0 0 12px var(--orange); animation: pulse 1.4s infinite; }
-    .status-dot.done   { background: var(--red);    box-shadow: 0 0 12px var(--red); }
-
-    .status-body { flex: 1; }
-    .status-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-    .status-value { font-size: 26px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; transition: color 0.3s; }
-    .status-value.c-trabajando { color: var(--green); }
-    .status-value.c-almorzando { color: var(--orange); }
-    .status-value.c-finalizado { color: var(--red); }
-    .status-value.c-espera     { color: var(--muted); }
-
-    /* ── Contador de puntos grabados ── */
-    .status-extra {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 11px; color: var(--muted); margin-top: 4px;
-      letter-spacing: 1px;
+    .status-dot.active { background:var(--green); box-shadow:0 0 12px var(--green); animation:pulse 1.4s infinite; }
+    .status-dot.lunch  { background:var(--orange); box-shadow:0 0 12px var(--orange); animation:pulse 1.4s infinite; }
+    .status-dot.done   { background:var(--red); box-shadow:0 0 12px var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.75)} }
+    .status-body { flex:1; }
+    .status-label { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:4px; }
+    .status-value { font-size:26px; font-weight:700; letter-spacing:2px; text-transform:uppercase; transition:color 0.3s; }
+    .status-value.c-trabajando { color:var(--green); }
+    .status-value.c-almorzando { color:var(--orange); }
+    .status-value.c-finalizado { color:var(--red); }
+    .status-value.c-espera     { color:var(--muted); }
+    .status-sub {
+      font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);
+      margin-top:5px; letter-spacing:1px; line-height:1.5;
     }
-    .status-extra span { color: var(--accent); font-weight: 700; }
+    .status-sub b { color:var(--accent); }
 
     .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
-      z-index: 1000; display: flex; align-items: center;
-      justify-content: center; padding: 20px;
-      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+      position:fixed; inset:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(6px);
+      z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px;
+      opacity:0; pointer-events:none; transition:opacity 0.25s;
     }
-    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal-overlay.show { opacity:1; pointer-events:all; }
     .modal-box {
-      background: #0f1928; border: 1px solid var(--border); border-radius: 18px;
-      padding: 30px 22px 24px; width: 100%; max-width: 360px;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.85);
-      transform: scale(0.9) translateY(20px);
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      text-align: center;
+      background:#0f1928; border:1px solid var(--border); border-radius:18px;
+      padding:30px 22px 24px; width:100%; max-width:360px;
+      box-shadow:0 24px 70px rgba(0,0,0,0.85);
+      transform:scale(0.9) translateY(20px);
+      transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); text-align:center;
     }
-    .modal-overlay.show .modal-box { transform: scale(1) translateY(0); }
-    .modal-icon   { font-size: 48px; margin-bottom: 14px; }
-    .modal-title  { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
-    .modal-action { font-size: 22px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    .modal-name   { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: var(--accent); margin-bottom: 28px; letter-spacing: 1px; }
-    .modal-btns   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-overlay.show .modal-box { transform:scale(1) translateY(0); }
+    .modal-icon  { font-size:48px; margin-bottom:14px; }
+    .modal-title { font-size:11px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+    .modal-action{ font-size:22px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; }
+    .modal-name  { font-family:'Share Tech Mono',monospace; font-size:14px; color:var(--accent); margin-bottom:28px; letter-spacing:1px; }
+    .modal-btns  { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .modal-cancel {
-      height: 56px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase; background: transparent;
-      border: 1px solid var(--border); border-radius: 10px; color: var(--muted); cursor: pointer;
+      height:56px; font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
+      letter-spacing:1.5px; text-transform:uppercase; background:transparent;
+      border:1px solid var(--border); border-radius:10px; color:var(--muted); cursor:pointer;
     }
-    .modal-cancel:active { background: rgba(255,255,255,0.05); color: var(--text); }
     .modal-confirm {
-      height: 56px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase; border: none; border-radius: 10px;
-      cursor: pointer; color: white;
+      height:56px; font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
+      letter-spacing:1.5px; text-transform:uppercase; border:none; border-radius:10px;
+      cursor:pointer; color:white;
     }
-    .modal-confirm:active { opacity: 0.8; }
 
     .toast {
-      position: fixed; bottom: 28px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: #0f1928; border: 1px solid var(--accent); border-radius: 12px;
-      padding: 14px 26px; font-family: 'Rajdhani', sans-serif;
-      font-size: 17px; font-weight: 700; letter-spacing: 1px; color: var(--accent);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
-      opacity: 0; z-index: 9999; pointer-events: none;
-      white-space: nowrap; max-width: 90vw; text-align: center;
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px);
+      background:#0f1928; border:1px solid var(--accent); border-radius:12px;
+      padding:14px 26px; font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700;
+      letter-spacing:1px; color:var(--accent); box-shadow:0 8px 30px rgba(0,0,0,0.6);
+      transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s;
+      opacity:0; z-index:9999; pointer-events:none; white-space:nowrap; max-width:90vw; text-align:center;
     }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
     #cola-info {
-      display: none;
-      width: 100%; max-width: 500px;
-      background: rgba(0,198,255,0.06);
-      border: 1px solid rgba(0,198,255,0.2);
-      border-radius: 8px; padding: 10px 16px;
-      font-size: 12px; font-weight: 600; letter-spacing: 1px;
-      color: var(--accent); text-align: center; margin-top: 12px;
+      display:none; width:100%; max-width:500px;
+      background:rgba(0,198,255,0.06); border:1px solid rgba(0,198,255,0.2);
+      border-radius:8px; padding:10px 16px; font-size:12px; font-weight:600;
+      letter-spacing:1px; color:var(--accent); text-align:center; margin-top:12px;
     }
-    #cola-info.show { display: block; }
+    #cola-info.show { display:block; }
   </style>
 </head>
 <body>
 
   <div id="offline-banner">📵 SIN CONEXIÓN · Guardando en cola local</div>
 
-  <!-- Indicador de recorrido grabándose -->
   <div id="gps-track-info">
-    <div class="track-dot"></div>
-    <span>GRABANDO RECORRIDO · <span id="track-count">0</span> PUNTOS</span>
+    <div class="track-left">
+      <div class="track-dot"></div>
+      <div class="track-label">GRABANDO RECORRIDO</div>
+    </div>
+    <div class="track-right">
+      <span id="track-count">0</span> pts · próx: <span id="next-ping-bar">5:00</span>
+    </div>
   </div>
 
   <div class="header">
@@ -345,14 +246,11 @@
   </div>
 
   <div class="card">
-
     <p class="field-label">Seleccionar cobrador</p>
     <div class="custom-select-wrap" id="selectWrap">
       <button type="button" class="custom-select-btn" id="selectBtn" onclick="toggleDropdown()">
         <span id="selectLabel" class="placeholder">— SELECCIONAR COBRADOR —</span>
-        <svg class="arrow" viewBox="0 0 12 8" fill="none" stroke="#00c6ff" stroke-width="2" stroke-linecap="round">
-          <path d="M1 1l5 5 5-5"/>
-        </svg>
+        <svg class="arrow" viewBox="0 0 12 8" fill="none" stroke="#00c6ff" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5 5-5"/></svg>
       </button>
       <div class="custom-dropdown" id="customDropdown">
         <div class="dropdown-item" onclick="seleccionarCobrador(this,'')"><span class="d-dot"></span>— SELECCIONAR —</div>
@@ -385,7 +283,6 @@
         </svg>
         INICIAR GPS
       </button>
-
       <div class="btn-row">
         <button class="btn-lunch-start" onclick="pedirConfirmacion('inicioAlmuerzo')">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -401,7 +298,6 @@
           FIN<br>ALMUERZO
         </button>
       </div>
-
       <button class="btn-stop" onclick="pedirConfirmacion('finalizarRutaGPS')">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -415,16 +311,14 @@
       <div class="status-body">
         <div class="status-label">ESTADO ACTUAL</div>
         <div class="status-value c-espera" id="statusValue">EN ESPERA</div>
-        <div class="status-extra" id="statusExtra" style="display:none">
-          RECORRIDO: <span id="puntosGrabados">0</span> puntos guardados
+        <div class="status-sub" id="statusSub" style="display:none">
+          PUNTOS: <b id="puntosGrabados">0</b> · PRÓXIMO PING: <b id="nextPingStatus">5:00</b>
         </div>
       </div>
     </div>
-
   </div>
 
   <div id="cola-info">📦 <span id="cola-count">0</span> acción(es) pendiente(s) de sincronizar</div>
-
   <div class="toast" id="toast"></div>
 
   <div class="modal-overlay" id="modalOverlay">
@@ -432,439 +326,360 @@
       <div class="modal-icon" id="modalIcon">📍</div>
       <div class="modal-title">Confirmar acción</div>
       <div class="modal-action" id="modalAction">—</div>
-      <div class="modal-name" id="modalName">—</div>
+      <div class="modal-name"  id="modalName">—</div>
       <div class="modal-btns">
-        <button class="modal-cancel" onclick="cerrarModal()">✕ Cancelar</button>
+        <button class="modal-cancel"  onclick="cerrarModal()">✕ Cancelar</button>
         <button class="modal-confirm" id="modalConfirmBtn" onclick="ejecutarAccion()">✓ Confirmar</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // ── Service Worker (PWA offline) ──────────────────────
-    if ('serviceWorker' in navigator) {
-      var swCode = `
-        var CACHE = 'gps-cob-v1';
-        var URLS  = [location.href];
-        self.addEventListener('install', function(e) {
-          e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(URLS); }));
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', function(e) { e.waitUntil(clients.claim()); });
-        self.addEventListener('fetch', function(e) {
-          e.respondWith(fetch(e.request).catch(function(){ return caches.match(e.request); }));
-        });
-      `;
-      var swBlob = new Blob([swCode], {type: 'application/javascript'});
-      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function(){});
-    }
+<script>
+  // ── Service Worker PWA ────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    var swCode = `var CACHE='gps-cob-v2';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll([location.href])));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(clients.claim());});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}))).catch(()=>{});
+  }
 
-    // ── Firebase ──────────────────────────────────────────
-    var firebaseConfig = {
-      apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-      authDomain: "gps-cobradores.firebaseapp.com",
-      databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-      projectId: "gps-cobradores"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
+  // ── Firebase ──────────────────────────────────────────
+  var firebaseConfig = {
+    apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+    authDomain: "gps-cobradores.firebaseapp.com",
+    databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+    projectId: "gps-cobradores"
+  };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
 
-    // ── Variables globales ────────────────────────────────
-    var intervaloGPS     = null;   // setInterval del rastreo cada 60s
-    var accionPendiente  = null;
-    var puntosGrabados   = 0;      // contador de puntos del recorrido actual
-    var grabandoRecorrido = false;  // true cuando el GPS está activo
+  // ── Variables ─────────────────────────────────────────
+  var intervaloGPS     = null;  // setInterval cada 5 min
+  var intervaloCuenta  = null;  // countdown de 5 min en pantalla
+  var accionPendiente  = null;
+  var puntosGrabados   = 0;
+  var segundosRestantes = 0;
+  var estadoActual     = 'espera'; // 'trabajando' | 'almuerzo' | 'finalizado' | 'espera'
 
-    // ── Dropdown ──────────────────────────────────────────
-    var dropdownOpen = false;
+  // ── INTERVALO: 5 MINUTOS = 300 segundos ──────────────
+  var INTERVALO_GPS_MS  = 5 * 60 * 1000;  // 5 minutos en ms
+  var INTERVALO_GPS_SEG = 5 * 60;          // 5 minutos en segundos
 
-    function toggleDropdown() {
-      dropdownOpen = !dropdownOpen;
-      document.getElementById('selectBtn').classList.toggle('open', dropdownOpen);
-      document.getElementById('customDropdown').classList.toggle('open', dropdownOpen);
-    }
-
-    function seleccionarCobrador(el, valor) {
-      document.getElementById('nombre').value = valor;
-      var label = document.getElementById('selectLabel');
-      if (valor) {
-        label.textContent = valor;
-        label.classList.remove('placeholder');
-      } else {
-        label.textContent = '— SELECCIONAR COBRADOR —';
-        label.classList.add('placeholder');
-      }
-      document.querySelectorAll('.dropdown-item').forEach(function(i){ i.classList.remove('selected'); });
-      el.classList.add('selected');
+  // ── Dropdown ──────────────────────────────────────────
+  var dropdownOpen = false;
+  function toggleDropdown() {
+    dropdownOpen = !dropdownOpen;
+    document.getElementById('selectBtn').classList.toggle('open', dropdownOpen);
+    document.getElementById('customDropdown').classList.toggle('open', dropdownOpen);
+  }
+  function seleccionarCobrador(el, valor) {
+    document.getElementById('nombre').value = valor;
+    var label = document.getElementById('selectLabel');
+    label.textContent = valor || '— SELECCIONAR COBRADOR —';
+    label.classList.toggle('placeholder', !valor);
+    document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    dropdownOpen = false;
+    document.getElementById('selectBtn').classList.remove('open');
+    document.getElementById('customDropdown').classList.remove('open');
+  }
+  document.addEventListener('click', function(e) {
+    if (dropdownOpen && !document.getElementById('selectWrap').contains(e.target)) {
       dropdownOpen = false;
       document.getElementById('selectBtn').classList.remove('open');
       document.getElementById('customDropdown').classList.remove('open');
     }
+  });
 
-    document.addEventListener('click', function(e) {
-      if (dropdownOpen) {
-        var wrap = document.getElementById('selectWrap');
-        if (wrap && !wrap.contains(e.target)) {
-          dropdownOpen = false;
-          document.getElementById('selectBtn').classList.remove('open');
-          document.getElementById('customDropdown').classList.remove('open');
-        }
-      }
+  // ── Cola offline posición actual ──────────────────────
+  var COLA_KEY = 'gps_cola_pendiente';
+  function cargarCola() { try { return JSON.parse(localStorage.getItem(COLA_KEY)||'[]'); } catch(e){ return []; } }
+  function guardarCola(c) { try { localStorage.setItem(COLA_KEY,JSON.stringify(c)); } catch(e){} }
+  function actualizarColaUI() {
+    var c = cargarCola();
+    var el = document.getElementById('cola-info');
+    document.getElementById('cola-count').textContent = c.length;
+    el.classList.toggle('show', c.length > 0);
+  }
+  function agregarACola(nombre, estado, lat, lon) {
+    var c = cargarCola();
+    c.push({ nombre, estado, hora:new Date().toLocaleTimeString('es-EC'), fecha:new Date().toLocaleDateString('es-EC'), lat, lon, ts:Date.now() });
+    guardarCola(c); actualizarColaUI();
+  }
+  function sincronizarCola() {
+    var c = cargarCola(); if (!c.length) return;
+    guardarCola([]);  actualizarColaUI();
+    c.forEach(item => {
+      var d = { estado:item.estado, hora:item.hora, fecha:item.fecha||'' };
+      if (item.lat) { d.latitud=item.lat; d.longitud=item.lon; }
+      db.ref('cobradores/'+item.nombre).update(d).catch(()=>agregarACola(item.nombre,item.estado,item.lat,item.lon));
     });
+    if (c.length) showToast('☁ '+c.length+' acción(es) sincronizadas');
+  }
 
-    // ── Cola offline (posición actual) ────────────────────
-    var COLA_KEY = 'gps_cola_pendiente';
-
-    function cargarCola() {
-      try { return JSON.parse(localStorage.getItem(COLA_KEY) || '[]'); } catch(e) { return []; }
-    }
-    function guardarCola(cola) {
-      try { localStorage.setItem(COLA_KEY, JSON.stringify(cola)); } catch(e) {}
-    }
-    function actualizarColaUI() {
-      var cola = cargarCola();
-      var el  = document.getElementById('cola-info');
-      var cnt = document.getElementById('cola-count');
-      if (cola.length > 0) { cnt.textContent = cola.length; el.classList.add('show'); }
-      else { el.classList.remove('show'); }
-    }
-    function agregarACola(nombre, estado, lat, lon) {
-      var cola = cargarCola();
-      cola.push({
-        nombre: nombre, estado: estado,
-        hora: new Date().toLocaleTimeString('es-EC'),
-        fecha: new Date().toLocaleDateString('es-EC'),
-        lat: lat, lon: lon, ts: Date.now()
-      });
-      guardarCola(cola);
-      actualizarColaUI();
-    }
-    function sincronizarCola() {
-      var cola = cargarCola();
-      if (cola.length === 0) return;
-      var pendientes = cola.slice();
-      guardarCola([]);
-      actualizarColaUI();
-      pendientes.forEach(function(item) {
-        var datos = { estado: item.estado, hora: item.hora, fecha: item.fecha || '' };
-        if (item.lat) { datos.latitud = item.lat; datos.longitud = item.lon; }
-        db.ref('cobradores/' + item.nombre).update(datos)
-          .catch(function() { agregarACola(item.nombre, item.estado, item.lat, item.lon); });
-      });
-      if (pendientes.length > 0) showToast('☁ ' + pendientes.length + ' acción(es) sincronizadas');
-    }
-
-    // ── Cola offline (historial de recorrido) ─────────────
-    var HISTORIAL_COLA_KEY = 'gps_historial_cola';
-
-    function cargarHistorialCola() {
-      try { return JSON.parse(localStorage.getItem(HISTORIAL_COLA_KEY) || '[]'); } catch(e) { return []; }
-    }
-    function guardarHistorialCola(cola) {
-      try { localStorage.setItem(HISTORIAL_COLA_KEY, JSON.stringify(cola)); } catch(e) {}
-    }
-    function agregarHistorialACola(nombre, ts, datos) {
-      var cola = cargarHistorialCola();
-      cola.push({ nombre: nombre, ts: ts, datos: datos });
-      // Limitar a 500 puntos en cola para no saturar localStorage
-      if (cola.length > 500) cola = cola.slice(cola.length - 500);
-      guardarHistorialCola(cola);
-    }
-    function sincronizarHistorialCola() {
-      var cola = cargarHistorialCola();
-      if (cola.length === 0) return;
-      var pendientes = cola.slice();
-      guardarHistorialCola([]);
-      pendientes.forEach(function(item) {
-        db.ref('historial/' + item.nombre + '/' + item.ts).set(item.datos)
-          .catch(function() { agregarHistorialACola(item.nombre, item.ts, item.datos); });
-      });
-    }
-
-    // ── Guardar un punto en el historial de recorrido ─────
-    // Se llama cada vez que hay una posición GPS, tanto al inicio como cada 60s
-    function guardarEnHistorial(nombre, lat, lon, estado) {
-      var ts    = Date.now();
-      var hora  = new Date().toLocaleTimeString('es-EC');
-      var fecha = new Date().toLocaleDateString('es-EC');
-
-      var datos = {
-        latitud:  lat,
-        longitud: lon,
-        hora:     hora,
-        fecha:    fecha,
-        estado:   estado
-      };
-
-      if (navigator.onLine) {
-        db.ref('historial/' + nombre + '/' + ts).set(datos)
-          .catch(function() {
-            // Si falla, guardar en cola offline
-            agregarHistorialACola(nombre, ts, datos);
-          });
-      } else {
-        agregarHistorialACola(nombre, ts, datos);
-      }
-
-      // Actualizar contador visual
-      puntosGrabados++;
-      document.getElementById('puntosGrabados').textContent = puntosGrabados;
-      document.getElementById('track-count').textContent    = puntosGrabados;
-    }
-
-    // ── Conectividad ──────────────────────────────────────
-    function actualizarConexion() {
-      var online = navigator.onLine;
-      document.getElementById('offline-banner').classList.toggle('show', !online);
-      document.getElementById('conn-badge').textContent = online ? 'SISTEMA GPS · ACTIVO' : 'SISTEMA GPS · OFFLINE';
-      if (online) {
-        sincronizarCola();
-        sincronizarPuntosCola();
-        sincronizarHistorialCola(); // ← sincronizar historial cuando vuelve la conexión
-      }
-    }
-
-    window.addEventListener('online',  actualizarConexion);
-    window.addEventListener('offline', actualizarConexion);
-    actualizarConexion();
-
-    db.ref('.info/connected').on('value', function(snap) {
-      if (snap.val() === true) {
-        sincronizarCola();
-        sincronizarHistorialCola();
-      }
+  // ── Cola offline historial recorrido ──────────────────
+  var HIST_KEY = 'gps_historial_cola';
+  function cargarHistCola() { try { return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch(e){ return []; } }
+  function guardarHistCola(c) { try { localStorage.setItem(HIST_KEY,JSON.stringify(c)); } catch(e){} }
+  function agregarHistACola(nombre, ts, datos) {
+    var c = cargarHistCola();
+    c.push({ nombre, ts, datos });
+    if (c.length > 1000) c = c.slice(c.length - 1000); // máx 1000 puntos en cola
+    guardarHistCola(c);
+  }
+  function sincronizarHistCola() {
+    var c = cargarHistCola(); if (!c.length) return;
+    guardarHistCola([]);
+    c.forEach(item => {
+      db.ref('historial/'+item.nombre+'/'+item.ts).set(item.datos)
+        .catch(()=>agregarHistACola(item.nombre, item.ts, item.datos));
     });
+  }
 
-    // ── Reloj ─────────────────────────────────────────────
-    setInterval(function(){
-      document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
-    }, 1000);
-    document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
+  // ── Cola offline puntos de evento ─────────────────────
+  function sincronizarPuntosCola() {
+    try {
+      var c = JSON.parse(localStorage.getItem('gps_puntos_cola')||'[]');
+      if (!c.length) return;
+      localStorage.removeItem('gps_puntos_cola');
+      c.forEach(item => db.ref('puntos/'+item.nombre+'/'+item.keyEvento).set(item.dato));
+    } catch(e) {}
+  }
 
-    // ── Toast ─────────────────────────────────────────────
-    var toastTimer;
-    function showToast(msg) {
-      var t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  // ── Conectividad ──────────────────────────────────────
+  function actualizarConexion() {
+    var online = navigator.onLine;
+    document.getElementById('offline-banner').classList.toggle('show', !online);
+    document.getElementById('conn-badge').textContent = online ? 'SISTEMA GPS · ACTIVO' : 'SISTEMA GPS · OFFLINE';
+    if (online) { sincronizarCola(); sincronizarPuntosCola(); sincronizarHistCola(); }
+  }
+  window.addEventListener('online',  actualizarConexion);
+  window.addEventListener('offline', actualizarConexion);
+  actualizarConexion();
+  db.ref('.info/connected').on('value', snap => { if (snap.val()) { sincronizarCola(); sincronizarHistCola(); } });
+
+  // ── Reloj ─────────────────────────────────────────────
+  setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC'); }, 1000);
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('es-EC');
+
+  // ── Countdown de próximo ping ─────────────────────────
+  function iniciarCountdown() {
+    if (intervaloCuenta) clearInterval(intervaloCuenta);
+    segundosRestantes = INTERVALO_GPS_SEG;
+    function actualizarCountdown() {
+      segundosRestantes--;
+      if (segundosRestantes < 0) segundosRestantes = INTERVALO_GPS_SEG;
+      var m = Math.floor(segundosRestantes / 60);
+      var s = segundosRestantes % 60;
+      var txt = m + ':' + (s < 10 ? '0' : '') + s;
+      var el1 = document.getElementById('next-ping-bar');
+      var el2 = document.getElementById('nextPingStatus');
+      if (el1) el1.textContent = txt;
+      if (el2) el2.textContent = txt;
     }
+    actualizarCountdown();
+    intervaloCuenta = setInterval(actualizarCountdown, 1000);
+  }
+  function detenerCountdown() {
+    if (intervaloCuenta) { clearInterval(intervaloCuenta); intervaloCuenta = null; }
+    var el1 = document.getElementById('next-ping-bar');
+    var el2 = document.getElementById('nextPingStatus');
+    if (el1) el1.textContent = '--';
+    if (el2) el2.textContent = '--';
+  }
 
-    // ── Estado visual ─────────────────────────────────────
-    var ESTADOS = {
-      active: { dot:'active', bar:'s-trabajando', val:'c-trabajando', txt:'TRABAJANDO'      },
-      lunch:  { dot:'lunch',  bar:'s-almorzando', val:'c-almorzando', txt:'ALMORZANDO'      },
-      done:   { dot:'done',   bar:'s-finalizado', val:'c-finalizado', txt:'RUTA FINALIZADA' },
-      espera: { dot:'',       bar:'',             val:'c-espera',     txt:'EN ESPERA'       }
-    };
-    function setStatus(type) {
-      var cfg = ESTADOS[type] || ESTADOS.espera;
-      document.getElementById('statusDot').className     = 'status-dot '   + cfg.dot;
-      document.getElementById('statusBar').className     = 'status-bar '   + cfg.bar;
-      document.getElementById('statusValue').className   = 'status-value ' + cfg.val;
-      document.getElementById('statusValue').textContent = cfg.txt;
+  // ── Toast ─────────────────────────────────────────────
+  var toastTimer;
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  }
 
-      // Mostrar/ocultar contador de puntos
-      var extra = document.getElementById('statusExtra');
-      if (type === 'active') {
-        extra.style.display = 'block';
-        document.getElementById('gps-track-info').classList.add('show');
-      } else if (type === 'done' || type === 'espera') {
-        extra.style.display = 'none';
-        document.getElementById('gps-track-info').classList.remove('show');
-      }
+  // ── Estado visual ─────────────────────────────────────
+  var ESTADOS_VIS = {
+    active: { dot:'active', bar:'s-trabajando', val:'c-trabajando', txt:'TRABAJANDO'      },
+    lunch:  { dot:'lunch',  bar:'s-almorzando', val:'c-almorzando', txt:'ALMORZANDO'      },
+    done:   { dot:'done',   bar:'s-finalizado', val:'c-finalizado', txt:'RUTA FINALIZADA' },
+    espera: { dot:'',       bar:'',             val:'c-espera',     txt:'EN ESPERA'       }
+  };
+  function setStatus(type) {
+    var cfg = ESTADOS_VIS[type] || ESTADOS_VIS.espera;
+    document.getElementById('statusDot').className     = 'status-dot '   + cfg.dot;
+    document.getElementById('statusBar').className     = 'status-bar '   + cfg.bar;
+    document.getElementById('statusValue').className   = 'status-value ' + cfg.val;
+    document.getElementById('statusValue').textContent = cfg.txt;
+    var sub = document.getElementById('statusSub');
+    var trackInfo = document.getElementById('gps-track-info');
+    if (type === 'active' || type === 'lunch') {
+      sub.style.display = 'block';
+      trackInfo.classList.add('show');
+    } else {
+      sub.style.display = 'none';
+      trackInfo.classList.remove('show');
     }
+  }
 
-    // ── Modal ─────────────────────────────────────────────
-    var ACCIONES = {
-      iniciarGPS:       { icon:'📍', label:'Iniciar GPS',        color:'#00e676', colorDark:'#007a38' },
-      inicioAlmuerzo:   { icon:'☕', label:'Inicio Almuerzo',    color:'#ff9100', colorDark:'#a04000' },
-      finAlmuerzo:      { icon:'✅', label:'Fin Almuerzo',       color:'#ffd600', colorDark:'#907000' },
-      finalizarRutaGPS: { icon:'🏁', label:'Finalizar Ruta GPS', color:'#ff1744', colorDark:'#880015' }
-    };
+  // ── Modal ─────────────────────────────────────────────
+  var ACCIONES_CFG = {
+    iniciarGPS:       { icon:'📍', label:'Iniciar GPS',        color:'#00e676', colorDark:'#007a38' },
+    inicioAlmuerzo:   { icon:'☕', label:'Inicio Almuerzo',    color:'#ff9100', colorDark:'#a04000' },
+    finAlmuerzo:      { icon:'✅', label:'Fin Almuerzo',       color:'#ffd600', colorDark:'#907000' },
+    finalizarRutaGPS: { icon:'🏁', label:'Finalizar Ruta GPS', color:'#ff1744', colorDark:'#880015' }
+  };
+  function pedirConfirmacion(accion) {
+    var nombre = document.getElementById('nombre').value;
+    if (!nombre) { showToast('⚠ Selecciona un cobrador primero'); return; }
+    var cfg = ACCIONES_CFG[accion];
+    document.getElementById('modalIcon').textContent   = cfg.icon;
+    document.getElementById('modalAction').textContent = cfg.label;
+    document.getElementById('modalAction').style.color = cfg.color;
+    document.getElementById('modalName').textContent   = nombre;
+    document.getElementById('modalConfirmBtn').style.background = 'linear-gradient(135deg,'+cfg.colorDark+','+cfg.color+')';
+    document.getElementById('modalConfirmBtn').style.color = accion==='finAlmuerzo'?'#1a1200':'#fff';
+    accionPendiente = accion;
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+  function cerrarModal() { document.getElementById('modalOverlay').classList.remove('show'); accionPendiente=null; }
+  function ejecutarAccion() {
+    var a = accionPendiente; cerrarModal();
+    if      (a==='iniciarGPS')       _iniciarGPS();
+    else if (a==='inicioAlmuerzo')   _inicioAlmuerzo();
+    else if (a==='finAlmuerzo')      _finAlmuerzo();
+    else if (a==='finalizarRutaGPS') _finalizarRutaGPS();
+  }
+  document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) cerrarModal(); });
 
-    function pedirConfirmacion(accion) {
-      var nombre = document.getElementById('nombre').value;
-      if (!nombre) { showToast('⚠ Selecciona un cobrador primero'); return; }
-      var cfg = ACCIONES[accion];
-      document.getElementById('modalIcon').textContent   = cfg.icon;
-      document.getElementById('modalAction').textContent = cfg.label;
-      document.getElementById('modalAction').style.color = cfg.color;
-      document.getElementById('modalName').textContent   = nombre;
-      document.getElementById('modalConfirmBtn').style.background =
-        'linear-gradient(135deg,' + cfg.colorDark + ',' + cfg.color + ')';
-      document.getElementById('modalConfirmBtn').style.color =
-        accion === 'finAlmuerzo' ? '#1a1200' : '#fff';
-      accionPendiente = accion;
-      document.getElementById('modalOverlay').classList.add('show');
-    }
-
-    function cerrarModal() {
-      document.getElementById('modalOverlay').classList.remove('show');
-      accionPendiente = null;
-    }
-
-    function ejecutarAccion() {
-      var a = accionPendiente;
-      cerrarModal();
-      if      (a === 'iniciarGPS')       _iniciarGPS();
-      else if (a === 'inicioAlmuerzo')   _inicioAlmuerzo();
-      else if (a === 'finAlmuerzo')      _finAlmuerzo();
-      else if (a === 'finalizarRutaGPS') _finalizarRutaGPS();
-    }
-
-    document.getElementById('modalOverlay').addEventListener('click', function(e){
-      if (e.target === this) cerrarModal();
-    });
-
-    // ── Guardar punto de evento en Firebase ──────────────
-    var EVENTOS = {
-      'trabajando':   { emoji:'🟢', label:'INICIO SESIÓN'   },
-      'almuerzo':     { emoji:'☕', label:'INICIO ALMUERZO' },
-      'fin_almuerzo': { emoji:'✅', label:'FIN ALMUERZO'    },
-      'finalizado':   { emoji:'🏁', label:'FIN RUTA'        }
-    };
-
-    function guardarPunto(nombre, tipoEvento, lat, lon) {
-      var hora  = new Date().toLocaleTimeString('es-EC');
-      var fecha = new Date().toLocaleDateString('es-EC');
-      var ev    = EVENTOS[tipoEvento] || { emoji:'📍', label:tipoEvento.toUpperCase() };
-      var dato  = { evento:tipoEvento, label:ev.label, hora:hora, fecha:fecha };
-      if (lat) { dato.latitud = lat; dato.longitud = lon; }
-
-      if (navigator.onLine) {
-        db.ref('puntos/' + nombre + '/' + tipoEvento).set(dato);
-      } else {
-        try {
-          var colaPuntos = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
-          colaPuntos.push({ nombre:nombre, keyEvento:tipoEvento, dato:dato });
-          localStorage.setItem('gps_puntos_cola', JSON.stringify(colaPuntos));
-        } catch(e) {}
-      }
-    }
-
-    function sincronizarPuntosCola() {
+  // ── Guardar punto de evento ───────────────────────────
+  var EVENTOS = {
+    'trabajando':   { emoji:'🟢', label:'INICIO SESIÓN'   },
+    'almuerzo':     { emoji:'☕', label:'INICIO ALMUERZO' },
+    'fin_almuerzo': { emoji:'✅', label:'FIN ALMUERZO'    },
+    'finalizado':   { emoji:'🏁', label:'FIN RUTA'        }
+  };
+  function guardarPunto(nombre, tipoEvento, lat, lon) {
+    var hora = new Date().toLocaleTimeString('es-EC');
+    var fecha = new Date().toLocaleDateString('es-EC');
+    var ev = EVENTOS[tipoEvento]||{emoji:'📍',label:tipoEvento.toUpperCase()};
+    var dato = { evento:tipoEvento, label:ev.label, hora, fecha };
+    if (lat) { dato.latitud=lat; dato.longitud=lon; }
+    if (navigator.onLine) {
+      db.ref('puntos/'+nombre+'/'+tipoEvento).set(dato);
+    } else {
       try {
-        var cola = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
-        if (!cola.length) return;
-        localStorage.removeItem('gps_puntos_cola');
-        cola.forEach(function(item) {
-          db.ref('puntos/' + item.nombre + '/' + item.keyEvento).set(item.dato);
-        });
+        var c = JSON.parse(localStorage.getItem('gps_puntos_cola')||'[]');
+        c.push({ nombre, keyEvento:tipoEvento, dato });
+        localStorage.setItem('gps_puntos_cola', JSON.stringify(c));
       } catch(e) {}
     }
+  }
 
-    // ── Enviar GPS principal ──────────────────────────────
-    // grabarHistorial: true  → además guarda en historial/nombre/timestamp
-    function enviarGPS(estado, statusKey, tipoEvento, grabarHistorial) {
-      var nombre = document.getElementById('nombre').value;
-      setStatus(statusKey);
-
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          var lat   = pos.coords.latitude;
-          var lon   = pos.coords.longitude;
-          var hora  = new Date().toLocaleTimeString('es-EC');
-          var fecha = new Date().toLocaleDateString('es-EC');
-          var datos = { estado:estado, hora:hora, fecha:fecha, latitud:lat, longitud:lon };
-
-          // Actualizar posición actual del cobrador
-          if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).set(datos)
-              .catch(function(){ agregarACola(nombre, estado, lat, lon); });
-          } else {
-            agregarACola(nombre, estado, lat, lon);
-          }
-
-          // Guardar punto de evento (inicio sesión, almuerzo, etc.)
-          if (tipoEvento) guardarPunto(nombre, tipoEvento, lat, lon);
-
-          // ── GUARDAR EN HISTORIAL DE RECORRIDO ──────────
-          // Se graba en cada actualización de posición mientras está trabajando o almorzando
-          if (grabarHistorial) {
-            guardarEnHistorial(nombre, lat, lon, estado);
-          }
-        },
-        function() {
-          // Sin GPS: actualizar estado igualmente sin coordenadas
-          var hora  = new Date().toLocaleTimeString('es-EC');
-          var fecha = new Date().toLocaleDateString('es-EC');
-          if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).update({ estado:estado, hora:hora, fecha:fecha })
-              .catch(function(){ agregarACola(nombre, estado, null, null); });
-          } else {
-            agregarACola(nombre, estado, null, null);
-          }
-          if (tipoEvento) guardarPunto(nombre, tipoEvento, null, null);
-          // Sin coordenadas no guardamos en historial (no tiene sentido)
-        },
-        { timeout: 10000, maximumAge: 30000, enableHighAccuracy: true }
-      );
+  // ── Guardar en historial de recorrido ─────────────────
+  function guardarEnHistorial(nombre, lat, lon, estado) {
+    var ts = Date.now();
+    var hora = new Date().toLocaleTimeString('es-EC');
+    var fecha = new Date().toLocaleDateString('es-EC');
+    var datos = { latitud:lat, longitud:lon, hora, fecha, estado };
+    if (navigator.onLine) {
+      db.ref('historial/'+nombre+'/'+ts).set(datos)
+        .catch(() => agregarHistACola(nombre, ts, datos));
+    } else {
+      agregarHistACola(nombre, ts, datos);
     }
+    // Actualizar contadores
+    puntosGrabados++;
+    document.getElementById('puntosGrabados').textContent = puntosGrabados;
+    document.getElementById('track-count').textContent    = puntosGrabados;
+  }
 
-    // ── Acciones principales ──────────────────────────────
-    function _iniciarGPS() {
-      if (intervaloGPS) clearInterval(intervaloGPS);
+  // ── Función central: obtener GPS y guardar ────────────
+  function enviarGPS(estado, statusKey, tipoEvento, grabarHistorial) {
+    var nombre = document.getElementById('nombre').value;
+    setStatus(statusKey);
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        var lat = pos.coords.latitude, lon = pos.coords.longitude;
+        var hora = new Date().toLocaleTimeString('es-EC');
+        var fecha = new Date().toLocaleDateString('es-EC');
+        var datos = { estado, hora, fecha, latitud:lat, longitud:lon };
+        if (navigator.onLine) {
+          db.ref('cobradores/'+nombre).set(datos).catch(()=>agregarACola(nombre,estado,lat,lon));
+        } else {
+          agregarACola(nombre, estado, lat, lon);
+        }
+        if (tipoEvento) guardarPunto(nombre, tipoEvento, lat, lon);
+        if (grabarHistorial) guardarEnHistorial(nombre, lat, lon, estado);
+        // Reiniciar countdown al guardar punto real
+        if (grabarHistorial && (estado==='trabajando'||estado==='almuerzo')) {
+          iniciarCountdown();
+        }
+      },
+      function() {
+        var hora = new Date().toLocaleTimeString('es-EC');
+        var fecha = new Date().toLocaleDateString('es-EC');
+        if (navigator.onLine) {
+          db.ref('cobradores/'+nombre).update({estado,hora,fecha}).catch(()=>agregarACola(nombre,estado,null,null));
+        } else {
+          agregarACola(nombre, estado, null, null);
+        }
+        if (tipoEvento) guardarPunto(nombre, tipoEvento, null, null);
+      },
+      { timeout:10000, maximumAge:0, enableHighAccuracy:true }
+    );
+  }
 
-      // Resetear contador de puntos del recorrido
-      puntosGrabados = 0;
-      document.getElementById('puntosGrabados').textContent = '0';
-      document.getElementById('track-count').textContent    = '0';
-      grabandoRecorrido = true;
+  // ── Iniciar GPS ───────────────────────────────────────
+  function _iniciarGPS() {
+    if (intervaloGPS) clearInterval(intervaloGPS);
+    puntosGrabados = 0;
+    document.getElementById('puntosGrabados').textContent = '0';
+    document.getElementById('track-count').textContent    = '0';
+    estadoActual = 'trabajando';
 
-      showToast('✓ GPS iniciado — grabando recorrido');
+    showToast('✓ GPS iniciado · ping cada 5 min');
 
-      // Primer punto: marca evento "trabajando" + guarda en historial
-      enviarGPS('trabajando', 'active', 'trabajando', true);
+    // Primer punto inmediato
+    enviarGPS('trabajando', 'active', 'trabajando', true);
 
-      // Cada 60 segundos: actualizar posición + guardar punto de recorrido
-      intervaloGPS = setInterval(function() {
-        enviarGPS('trabajando', 'active', null, true);
-      }, 60000);
-    }
+    // Cada 5 MINUTOS registrar posición en historial
+    intervaloGPS = setInterval(function() {
+      enviarGPS('trabajando', 'active', null, true);
+    }, INTERVALO_GPS_MS);
 
-    function _inicioAlmuerzo() {
-      showToast('☕ Inicio de almuerzo registrado');
-      // Durante almuerzo también se sigue grabando el recorrido
-      enviarGPS('almuerzo', 'lunch', 'almuerzo', true);
+    iniciarCountdown();
+  }
 
-      // Cambiar el intervalo para seguir grabando en estado almuerzo
-      if (intervaloGPS) clearInterval(intervaloGPS);
-      intervaloGPS = setInterval(function() {
-        enviarGPS('almuerzo', 'lunch', null, true);
-      }, 60000);
-    }
+  function _inicioAlmuerzo() {
+    estadoActual = 'almuerzo';
+    showToast('☕ Inicio de almuerzo registrado');
+    enviarGPS('almuerzo', 'lunch', 'almuerzo', true);
+    if (intervaloGPS) clearInterval(intervaloGPS);
+    intervaloGPS = setInterval(function() {
+      enviarGPS('almuerzo', 'lunch', null, true);
+    }, INTERVALO_GPS_MS);
+    iniciarCountdown();
+  }
 
-    function _finAlmuerzo() {
-      showToast('✓ Fin de almuerzo — regresó al trabajo');
-      enviarGPS('trabajando', 'active', 'fin_almuerzo', true);
+  function _finAlmuerzo() {
+    estadoActual = 'trabajando';
+    showToast('✓ Fin almuerzo · regresó al trabajo');
+    enviarGPS('trabajando', 'active', 'fin_almuerzo', true);
+    if (intervaloGPS) clearInterval(intervaloGPS);
+    intervaloGPS = setInterval(function() {
+      enviarGPS('trabajando', 'active', null, true);
+    }, INTERVALO_GPS_MS);
+    iniciarCountdown();
+  }
 
-      // Reanudar intervalo en estado trabajando
-      if (intervaloGPS) clearInterval(intervaloGPS);
-      intervaloGPS = setInterval(function() {
-        enviarGPS('trabajando', 'active', null, true);
-      }, 60000);
-    }
+  function _finalizarRutaGPS() {
+    if (intervaloGPS) { clearInterval(intervaloGPS); intervaloGPS = null; }
+    detenerCountdown();
+    estadoActual = 'finalizado';
+    showToast('🏁 Ruta finalizada · ' + puntosGrabados + ' puntos grabados');
+    enviarGPS('finalizado', 'done', 'finalizado', true);
+    setTimeout(() => document.getElementById('gps-track-info').classList.remove('show'), 3000);
+  }
 
-    function _finalizarRutaGPS() {
-      // Detener el intervalo
-      if (intervaloGPS) { clearInterval(intervaloGPS); intervaloGPS = null; }
-      grabandoRecorrido = false;
-
-      showToast('🏁 Ruta GPS finalizada · ' + puntosGrabados + ' puntos grabados');
-
-      // Guardar último punto de la ruta en el historial
-      enviarGPS('finalizado', 'done', 'finalizado', true);
-
-      // Ocultar indicador de recorrido después de 3s
-      setTimeout(function() {
-        document.getElementById('gps-track-info').classList.remove('show');
-      }, 3000);
-    }
-
-    // ── Cargar cola al inicio ─────────────────────────────
-    actualizarColaUI();
-  </script>
+  actualizarColaUI();
+</script>
 </body>
 </html>
