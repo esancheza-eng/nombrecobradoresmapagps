@@ -10,7 +10,6 @@
   <meta name="theme-color" content="#080d18">
   <title>GPS Cobradores</title>
 
-  <!-- Manifest inline via blob (PWA installable) -->
   <script>
     var manifest = {
       name: "GPS Cobradores",
@@ -32,15 +31,11 @@
     document.head.appendChild(link);
   </script>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
-  <!-- Google Fonts con fallback offline -->
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
-    /* Fuente fallback si no hay internet */
     @font-face {
       font-family: 'Rajdhani';
       font-weight: 700;
@@ -77,25 +72,18 @@
         radial-gradient(ellipse at 85% 85%, rgba(0,198,255,0.07) 0%, transparent 50%);
     }
 
-    /* ── OFFLINE BANNER ── */
     #offline-banner {
       display: none;
-      width: 100%;
-      max-width: 500px;
+      width: 100%; max-width: 500px;
       background: rgba(255,145,0,0.15);
       border: 1px solid rgba(255,145,0,0.4);
       border-radius: 8px;
       padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: var(--orange);
-      text-align: center;
-      margin-bottom: 12px;
+      font-size: 13px; font-weight: 700; letter-spacing: 1px;
+      color: var(--orange); text-align: center; margin-bottom: 12px;
     }
     #offline-banner.show { display: block; }
 
-    /* ── HEADER ── */
     .header { width: 100%; max-width: 500px; text-align: center; margin-bottom: 18px; }
     .badge {
       display: inline-block;
@@ -118,7 +106,29 @@
       font-size: 13px; color: var(--muted); letter-spacing: 2px; margin-top: 6px;
     }
 
-    /* ── CARD ── */
+    /* ── Indicador de recorrido activo ── */
+    #gps-track-info {
+      display: none;
+      width: 100%; max-width: 500px;
+      background: rgba(0,230,118,0.06);
+      border: 1px solid rgba(0,230,118,0.25);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      color: var(--green); text-align: center; margin-bottom: 10px;
+    }
+    #gps-track-info.show { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    #gps-track-info .track-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      animation: pulse 1.4s infinite;
+      box-shadow: 0 0 8px var(--green);
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.3; transform:scale(0.75); }
+    }
+
     .card {
       width: 100%; max-width: 500px;
       background: var(--panel); border: 1px solid var(--border);
@@ -132,7 +142,6 @@
       text-transform: uppercase; margin-bottom: 8px;
     }
 
-    /* ── DROPDOWN ── */
     .custom-select-wrap { position: relative; width: 100%; user-select: none; z-index: 200; }
 
     .custom-select-btn {
@@ -186,12 +195,10 @@
     }
     .dropdown-item.selected .d-dot { opacity: 1; box-shadow: 0 0 6px var(--accent); }
 
-    /* ── DIVIDER ── */
     .divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 18px; }
     .divider span { font-size: 10px; letter-spacing: 3px; color: var(--muted); white-space: nowrap; }
     .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    /* ── BUTTONS ── */
     .btn-group { display: flex; flex-direction: column; gap: 12px; }
     .btn-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -225,7 +232,6 @@
       box-shadow: 0 6px 24px rgba(255,23,68,0.35); font-size: 20px; height: 72px;
     }
 
-    /* ── STATUS ── */
     .status-bar {
       margin-top: 20px; background: rgba(0,0,0,0.3);
       border: 2px solid var(--border); border-radius: 12px;
@@ -246,11 +252,6 @@
     .status-dot.lunch  { background: var(--orange); box-shadow: 0 0 12px var(--orange); animation: pulse 1.4s infinite; }
     .status-dot.done   { background: var(--red);    box-shadow: 0 0 12px var(--red); }
 
-    @keyframes pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:0.3; transform:scale(0.75); }
-    }
-
     .status-body { flex: 1; }
     .status-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
     .status-value { font-size: 26px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; transition: color 0.3s; }
@@ -259,7 +260,14 @@
     .status-value.c-finalizado { color: var(--red); }
     .status-value.c-espera     { color: var(--muted); }
 
-    /* ── MODAL ── */
+    /* ── Contador de puntos grabados ── */
+    .status-extra {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px; color: var(--muted); margin-top: 4px;
+      letter-spacing: 1px;
+    }
+    .status-extra span { color: var(--accent); font-weight: 700; }
+
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
@@ -295,7 +303,6 @@
     }
     .modal-confirm:active { opacity: 0.8; }
 
-    /* ── TOAST ── */
     .toast {
       position: fixed; bottom: 28px; left: 50%;
       transform: translateX(-50%) translateY(80px);
@@ -309,7 +316,6 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* ── COLA OFFLINE ── */
     #cola-info {
       display: none;
       width: 100%; max-width: 500px;
@@ -324,8 +330,13 @@
 </head>
 <body>
 
-  <!-- Banner sin conexión -->
   <div id="offline-banner">📵 SIN CONEXIÓN · Guardando en cola local</div>
+
+  <!-- Indicador de recorrido grabándose -->
+  <div id="gps-track-info">
+    <div class="track-dot"></div>
+    <span>GRABANDO RECORRIDO · <span id="track-count">0</span> PUNTOS</span>
+  </div>
 
   <div class="header">
     <div class="badge" id="conn-badge">SISTEMA GPS · ACTIVO</div>
@@ -404,6 +415,9 @@
       <div class="status-body">
         <div class="status-label">ESTADO ACTUAL</div>
         <div class="status-value c-espera" id="statusValue">EN ESPERA</div>
+        <div class="status-extra" id="statusExtra" style="display:none">
+          RECORRIDO: <span id="puntosGrabados">0</span> puntos guardados
+        </div>
       </div>
     </div>
 
@@ -436,21 +450,30 @@
           e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(URLS); }));
           self.skipWaiting();
         });
-        self.addEventListener('activate', function(e) {
-          e.waitUntil(clients.claim());
-        });
+        self.addEventListener('activate', function(e) { e.waitUntil(clients.claim()); });
         self.addEventListener('fetch', function(e) {
-          e.respondWith(
-            fetch(e.request).catch(function(){
-              return caches.match(e.request);
-            })
-          );
+          e.respondWith(fetch(e.request).catch(function(){ return caches.match(e.request); }));
         });
       `;
       var swBlob = new Blob([swCode], {type: 'application/javascript'});
-      navigator.serviceWorker.register(URL.createObjectURL(swBlob))
-        .catch(function(){});
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function(){});
     }
+
+    // ── Firebase ──────────────────────────────────────────
+    var firebaseConfig = {
+      apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+      authDomain: "gps-cobradores.firebaseapp.com",
+      databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+      projectId: "gps-cobradores"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+
+    // ── Variables globales ────────────────────────────────
+    var intervaloGPS     = null;   // setInterval del rastreo cada 60s
+    var accionPendiente  = null;
+    var puntosGrabados   = 0;      // contador de puntos del recorrido actual
+    var grabandoRecorrido = false;  // true cuando el GPS está activo
 
     // ── Dropdown ──────────────────────────────────────────
     var dropdownOpen = false;
@@ -489,21 +512,7 @@
       }
     });
 
-    // ── Firebase ──────────────────────────────────────────
-    var firebaseConfig = {
-      apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-      authDomain: "gps-cobradores.firebaseapp.com",
-      databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-      projectId: "gps-cobradores"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
-
-    var intervaloGPS    = null;
-    var accionPendiente = null;
-
-    // ── Cola offline ──────────────────────────────────────
-    // Guardamos acciones pendientes en localStorage cuando no hay red
+    // ── Cola offline (posición actual) ────────────────────
     var COLA_KEY = 'gps_cola_pendiente';
 
     function cargarCola() {
@@ -514,16 +523,11 @@
     }
     function actualizarColaUI() {
       var cola = cargarCola();
-      var el = document.getElementById('cola-info');
+      var el  = document.getElementById('cola-info');
       var cnt = document.getElementById('cola-count');
-      if (cola.length > 0) {
-        cnt.textContent = cola.length;
-        el.classList.add('show');
-      } else {
-        el.classList.remove('show');
-      }
+      if (cola.length > 0) { cnt.textContent = cola.length; el.classList.add('show'); }
+      else { el.classList.remove('show'); }
     }
-
     function agregarACola(nombre, estado, lat, lon) {
       var cola = cargarCola();
       cola.push({
@@ -535,7 +539,6 @@
       guardarCola(cola);
       actualizarColaUI();
     }
-
     function sincronizarCola() {
       var cola = cargarCola();
       if (cola.length === 0) return;
@@ -546,11 +549,67 @@
         var datos = { estado: item.estado, hora: item.hora, fecha: item.fecha || '' };
         if (item.lat) { datos.latitud = item.lat; datos.longitud = item.lon; }
         db.ref('cobradores/' + item.nombre).update(datos)
-          .catch(function() {
-            agregarACola(item.nombre, item.estado, item.lat, item.lon);
-          });
+          .catch(function() { agregarACola(item.nombre, item.estado, item.lat, item.lon); });
       });
       if (pendientes.length > 0) showToast('☁ ' + pendientes.length + ' acción(es) sincronizadas');
+    }
+
+    // ── Cola offline (historial de recorrido) ─────────────
+    var HISTORIAL_COLA_KEY = 'gps_historial_cola';
+
+    function cargarHistorialCola() {
+      try { return JSON.parse(localStorage.getItem(HISTORIAL_COLA_KEY) || '[]'); } catch(e) { return []; }
+    }
+    function guardarHistorialCola(cola) {
+      try { localStorage.setItem(HISTORIAL_COLA_KEY, JSON.stringify(cola)); } catch(e) {}
+    }
+    function agregarHistorialACola(nombre, ts, datos) {
+      var cola = cargarHistorialCola();
+      cola.push({ nombre: nombre, ts: ts, datos: datos });
+      // Limitar a 500 puntos en cola para no saturar localStorage
+      if (cola.length > 500) cola = cola.slice(cola.length - 500);
+      guardarHistorialCola(cola);
+    }
+    function sincronizarHistorialCola() {
+      var cola = cargarHistorialCola();
+      if (cola.length === 0) return;
+      var pendientes = cola.slice();
+      guardarHistorialCola([]);
+      pendientes.forEach(function(item) {
+        db.ref('historial/' + item.nombre + '/' + item.ts).set(item.datos)
+          .catch(function() { agregarHistorialACola(item.nombre, item.ts, item.datos); });
+      });
+    }
+
+    // ── Guardar un punto en el historial de recorrido ─────
+    // Se llama cada vez que hay una posición GPS, tanto al inicio como cada 60s
+    function guardarEnHistorial(nombre, lat, lon, estado) {
+      var ts    = Date.now();
+      var hora  = new Date().toLocaleTimeString('es-EC');
+      var fecha = new Date().toLocaleDateString('es-EC');
+
+      var datos = {
+        latitud:  lat,
+        longitud: lon,
+        hora:     hora,
+        fecha:    fecha,
+        estado:   estado
+      };
+
+      if (navigator.onLine) {
+        db.ref('historial/' + nombre + '/' + ts).set(datos)
+          .catch(function() {
+            // Si falla, guardar en cola offline
+            agregarHistorialACola(nombre, ts, datos);
+          });
+      } else {
+        agregarHistorialACola(nombre, ts, datos);
+      }
+
+      // Actualizar contador visual
+      puntosGrabados++;
+      document.getElementById('puntosGrabados').textContent = puntosGrabados;
+      document.getElementById('track-count').textContent    = puntosGrabados;
     }
 
     // ── Conectividad ──────────────────────────────────────
@@ -558,16 +617,22 @@
       var online = navigator.onLine;
       document.getElementById('offline-banner').classList.toggle('show', !online);
       document.getElementById('conn-badge').textContent = online ? 'SISTEMA GPS · ACTIVO' : 'SISTEMA GPS · OFFLINE';
-      if (online) { sincronizarCola(); sincronizarPuntosCola(); }
+      if (online) {
+        sincronizarCola();
+        sincronizarPuntosCola();
+        sincronizarHistorialCola(); // ← sincronizar historial cuando vuelve la conexión
+      }
     }
 
     window.addEventListener('online',  actualizarConexion);
     window.addEventListener('offline', actualizarConexion);
     actualizarConexion();
 
-    // Firebase también detecta conexión
     db.ref('.info/connected').on('value', function(snap) {
-      if (snap.val() === true) sincronizarCola();
+      if (snap.val() === true) {
+        sincronizarCola();
+        sincronizarHistorialCola();
+      }
     });
 
     // ── Reloj ─────────────────────────────────────────────
@@ -595,10 +660,20 @@
     };
     function setStatus(type) {
       var cfg = ESTADOS[type] || ESTADOS.espera;
-      document.getElementById('statusDot').className    = 'status-dot '   + cfg.dot;
-      document.getElementById('statusBar').className    = 'status-bar '   + cfg.bar;
-      document.getElementById('statusValue').className  = 'status-value ' + cfg.val;
+      document.getElementById('statusDot').className     = 'status-dot '   + cfg.dot;
+      document.getElementById('statusBar').className     = 'status-bar '   + cfg.bar;
+      document.getElementById('statusValue').className   = 'status-value ' + cfg.val;
       document.getElementById('statusValue').textContent = cfg.txt;
+
+      // Mostrar/ocultar contador de puntos
+      var extra = document.getElementById('statusExtra');
+      if (type === 'active') {
+        extra.style.display = 'block';
+        document.getElementById('gps-track-info').classList.add('show');
+      } else if (type === 'done' || type === 'espera') {
+        extra.style.display = 'none';
+        document.getElementById('gps-track-info').classList.remove('show');
+      }
     }
 
     // ── Modal ─────────────────────────────────────────────
@@ -645,27 +720,25 @@
 
     // ── Guardar punto de evento en Firebase ──────────────
     var EVENTOS = {
-      'trabajando':  { emoji: '🟢', label: 'INICIO SESIÓN' },
-      'almuerzo':    { emoji: '☕', label: 'INICIO ALMUERZO' },
-      'fin_almuerzo':{ emoji: '✅', label: 'FIN ALMUERZO' },
-      'finalizado':  { emoji: '🏁', label: 'FIN RUTA' }
+      'trabajando':   { emoji:'🟢', label:'INICIO SESIÓN'   },
+      'almuerzo':     { emoji:'☕', label:'INICIO ALMUERZO' },
+      'fin_almuerzo': { emoji:'✅', label:'FIN ALMUERZO'    },
+      'finalizado':   { emoji:'🏁', label:'FIN RUTA'        }
     };
 
     function guardarPunto(nombre, tipoEvento, lat, lon) {
       var hora  = new Date().toLocaleTimeString('es-EC');
       var fecha = new Date().toLocaleDateString('es-EC');
-      var ev    = EVENTOS[tipoEvento] || { emoji: '📍', label: tipoEvento.toUpperCase() };
-      var dato  = { evento: tipoEvento, label: ev.label, hora: hora, fecha: fecha };
+      var ev    = EVENTOS[tipoEvento] || { emoji:'📍', label:tipoEvento.toUpperCase() };
+      var dato  = { evento:tipoEvento, label:ev.label, hora:hora, fecha:fecha };
       if (lat) { dato.latitud = lat; dato.longitud = lon; }
 
-      var keyEvento = tipoEvento; // clave fija por tipo: solo 1 por evento por día
       if (navigator.onLine) {
-        db.ref('puntos/' + nombre + '/' + keyEvento).set(dato);
+        db.ref('puntos/' + nombre + '/' + tipoEvento).set(dato);
       } else {
-        // Guardar en cola offline
         try {
           var colaPuntos = JSON.parse(localStorage.getItem('gps_puntos_cola') || '[]');
-          colaPuntos.push({ nombre: nombre, keyEvento: keyEvento, dato: dato });
+          colaPuntos.push({ nombre:nombre, keyEvento:tipoEvento, dato:dato });
           localStorage.setItem('gps_puntos_cola', JSON.stringify(colaPuntos));
         } catch(e) {}
       }
@@ -682,66 +755,115 @@
       } catch(e) {}
     }
 
-    // ── Enviar GPS (con soporte offline) ──────────────────
-    function enviarGPS(estado, statusKey, tipoEvento) {
+    // ── Enviar GPS principal ──────────────────────────────
+    // grabarHistorial: true  → además guarda en historial/nombre/timestamp
+    function enviarGPS(estado, statusKey, tipoEvento, grabarHistorial) {
       var nombre = document.getElementById('nombre').value;
       setStatus(statusKey);
 
       navigator.geolocation.getCurrentPosition(
         function(pos) {
-          var lat  = pos.coords.latitude;
-          var lon  = pos.coords.longitude;
-          var hora = new Date().toLocaleTimeString('es-EC');
+          var lat   = pos.coords.latitude;
+          var lon   = pos.coords.longitude;
+          var hora  = new Date().toLocaleTimeString('es-EC');
           var fecha = new Date().toLocaleDateString('es-EC');
-          var datos = { estado: estado, hora: hora, fecha: fecha, latitud: lat, longitud: lon };
+          var datos = { estado:estado, hora:hora, fecha:fecha, latitud:lat, longitud:lon };
+
+          // Actualizar posición actual del cobrador
           if (navigator.onLine) {
             db.ref('cobradores/' + nombre).set(datos)
               .catch(function(){ agregarACola(nombre, estado, lat, lon); });
           } else {
             agregarACola(nombre, estado, lat, lon);
           }
-          // Guardar punto de evento
+
+          // Guardar punto de evento (inicio sesión, almuerzo, etc.)
           if (tipoEvento) guardarPunto(nombre, tipoEvento, lat, lon);
+
+          // ── GUARDAR EN HISTORIAL DE RECORRIDO ──────────
+          // Se graba en cada actualización de posición mientras está trabajando o almorzando
+          if (grabarHistorial) {
+            guardarEnHistorial(nombre, lat, lon, estado);
+          }
         },
         function() {
-          var hora = new Date().toLocaleTimeString('es-EC');
+          // Sin GPS: actualizar estado igualmente sin coordenadas
+          var hora  = new Date().toLocaleTimeString('es-EC');
           var fecha = new Date().toLocaleDateString('es-EC');
           if (navigator.onLine) {
-            db.ref('cobradores/' + nombre).update({ estado: estado, hora: hora, fecha: fecha })
+            db.ref('cobradores/' + nombre).update({ estado:estado, hora:hora, fecha:fecha })
               .catch(function(){ agregarACola(nombre, estado, null, null); });
           } else {
             agregarACola(nombre, estado, null, null);
           }
           if (tipoEvento) guardarPunto(nombre, tipoEvento, null, null);
+          // Sin coordenadas no guardamos en historial (no tiene sentido)
         },
         { timeout: 10000, maximumAge: 30000, enableHighAccuracy: true }
       );
     }
 
+    // ── Acciones principales ──────────────────────────────
     function _iniciarGPS() {
       if (intervaloGPS) clearInterval(intervaloGPS);
-      showToast('✓ GPS iniciado correctamente');
-      enviarGPS('trabajando', 'active', 'trabajando');
-      intervaloGPS = setInterval(function(){ enviarGPS('trabajando', 'active', null); }, 60000);
+
+      // Resetear contador de puntos del recorrido
+      puntosGrabados = 0;
+      document.getElementById('puntosGrabados').textContent = '0';
+      document.getElementById('track-count').textContent    = '0';
+      grabandoRecorrido = true;
+
+      showToast('✓ GPS iniciado — grabando recorrido');
+
+      // Primer punto: marca evento "trabajando" + guarda en historial
+      enviarGPS('trabajando', 'active', 'trabajando', true);
+
+      // Cada 60 segundos: actualizar posición + guardar punto de recorrido
+      intervaloGPS = setInterval(function() {
+        enviarGPS('trabajando', 'active', null, true);
+      }, 60000);
     }
 
     function _inicioAlmuerzo() {
       showToast('☕ Inicio de almuerzo registrado');
-      enviarGPS('almuerzo', 'lunch', 'almuerzo');
+      // Durante almuerzo también se sigue grabando el recorrido
+      enviarGPS('almuerzo', 'lunch', 'almuerzo', true);
+
+      // Cambiar el intervalo para seguir grabando en estado almuerzo
+      if (intervaloGPS) clearInterval(intervaloGPS);
+      intervaloGPS = setInterval(function() {
+        enviarGPS('almuerzo', 'lunch', null, true);
+      }, 60000);
     }
 
     function _finAlmuerzo() {
       showToast('✓ Fin de almuerzo — regresó al trabajo');
-      enviarGPS('trabajando', 'active', 'fin_almuerzo');
+      enviarGPS('trabajando', 'active', 'fin_almuerzo', true);
+
+      // Reanudar intervalo en estado trabajando
+      if (intervaloGPS) clearInterval(intervaloGPS);
+      intervaloGPS = setInterval(function() {
+        enviarGPS('trabajando', 'active', null, true);
+      }, 60000);
     }
 
     function _finalizarRutaGPS() {
+      // Detener el intervalo
       if (intervaloGPS) { clearInterval(intervaloGPS); intervaloGPS = null; }
-      showToast('🏁 Ruta GPS finalizada');
-      enviarGPS('finalizado', 'done', 'finalizado');
+      grabandoRecorrido = false;
+
+      showToast('🏁 Ruta GPS finalizada · ' + puntosGrabados + ' puntos grabados');
+
+      // Guardar último punto de la ruta en el historial
+      enviarGPS('finalizado', 'done', 'finalizado', true);
+
+      // Ocultar indicador de recorrido después de 3s
+      setTimeout(function() {
+        document.getElementById('gps-track-info').classList.remove('show');
+      }, 3000);
     }
 
-    // Cargar cola al inicio
+    // ── Cargar cola al inicio ─────────────────────────────
     actualizarColaUI();
   </script>
 </body>
