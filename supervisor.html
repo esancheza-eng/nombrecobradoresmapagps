@@ -731,7 +731,11 @@ function renderLista(filtro) {
       card.classList.add('sel');
       map.flyTo([lat,lon],16,{duration:1});
       if(marcadores[nombre]) marcadores[nombre].openPopup();
-      showToast('📍 '+nombre);
+      if (recorridoActivo!==nombre) {
+        if (mostrarRecorrido(nombre)) renderLista(document.getElementById('search').value);
+      } else {
+        showToast('📍 '+nombre);
+      }
     };
     container.appendChild(card);
   });
