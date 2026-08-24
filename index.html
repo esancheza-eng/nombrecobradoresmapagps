@@ -632,6 +632,7 @@
   function enviarGPS(estado, statusKey, tipoEvento, grabarHistorial) {
     var nombre = document.getElementById('nombre').value;
     setStatus(statusKey);
+    showToast('📍 Buscando tu ubicación...');
     obtenerUbicacion(
       function(pos) {
         var lat = pos.coords.latitude, lon = pos.coords.longitude;
@@ -645,6 +646,7 @@
         }
         if (tipoEvento) guardarPunto(nombre, tipoEvento, lat, lon);
         if (grabarHistorial) guardarEnHistorial(nombre, lat, lon, estado);
+        if (tipoEvento) showToast('✓ Ubicación registrada correctamente');
         // Reiniciar countdown al guardar punto real
         if (grabarHistorial && (estado==='trabajando'||estado==='almuerzo')) {
           iniciarCountdown();
