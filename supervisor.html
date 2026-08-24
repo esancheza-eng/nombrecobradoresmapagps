@@ -60,7 +60,8 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);he
 .cobrador-card.finalizado::before{background:var(--red);}
 .cobrador-card.sin-gps::before{background:var(--muted);}
 .cobrador-card:hover,.cobrador-card.sel{border-color:var(--accent);background:rgba(0,198,255,0.04);}
-.c-name{font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:4px;line-height:1.2;}
+.c-name{font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:4px;line-height:1.2;display:flex;align-items:center;gap:6px;}
+.c-num{flex-shrink:0;width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;color:#fff;box-shadow:0 0 6px rgba(0,0,0,0.4);}
 .c-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .estado-pill{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:2px 6px;border-radius:3px;text-transform:uppercase;}
 .pill-trabajando{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25);}
@@ -140,6 +141,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);he
   <button class="nav-btn"        onclick="setView('finalizados',this)" style="color:#ff6b6b;border-color:#3a1020;">🏁 Finalizados</button>
   <button class="nav-btn danger" onclick="setView('sin-gps',this)">🔴 Sin GPS</button>
   <button class="nav-btn"        onclick="setView('detenciones',this)" style="color:#ffd600;border-color:#3a2a00;">⚠ Detenidos</button>
+  <button class="nav-btn" id="btn-todos-rec" onclick="toggleTodosRecorridos()" style="color:#b388ff;border-color:#2a1a4a;">🗺️ Ver Todos los Recorridos</button>
   <button class="nav-btn"        onclick="descargarExcel()"            style="color:#4dffb0;border-color:#0a3020;">📥 Excel</button>
   <button class="nav-btn" id="btn-sonido" onclick="toggleSonido()">🔕 Activar Alertas Sonoras</button>
   <button class="nav-btn danger" onclick="confirmarBorrar()"           style="margin-left:auto;">🗑 Borrar</button>
@@ -175,6 +177,7 @@ body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);he
       <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> Almuerzo</div>
       <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> Finalizado</div>
       <div class="legend-item"><div class="leg-dot" style="background:#3d5a7a"></div> Sin GPS</div>
+      <div class="legend-item" style="font-size:9px;color:#3d5a7a;">🔢 Número arriba = orden del cobrador</div>
       <div style="height:4px;border-top:1px solid #1a3050;margin:5px 0;"></div>
       <div class="legend-item" style="font-size:10px;color:#3d5a7a;letter-spacing:1px;">MARCADORES DE EVENTO</div>
       <div class="legend-item">🟢 Inicio Sesión</div>
@@ -334,6 +337,8 @@ var marcadoresPuntos = {};
 var marcadoresAlerta = {};
 var recorridoLayers  = {};
 var recorridoActivo  = null;
+var recorridoTodosLayers  = {};
+var todosRecorridosActivo = false;
 var ultimaPosicion   = {};
 var tiempoParado     = {};
 var horaParado       = {};
@@ -410,6 +415,28 @@ var COBRADORES = [
 ];
 function esCob(n){ return COBRADORES.indexOf(n.toUpperCase())!==-1; }
 
+// ── Numeración y color fijo por cobrador (según el orden de la lista) ──
+var PALETA_COBRADORES = ['#1a73e8','#ea4335','#34a853','#f9ab00','#9c27b0','#00bcd4','#ff5722','#8bc34a','#3f51b5','#e91e63','#795548','#009688'];
+var NUMERO_COBRADOR = {};
+var COLOR_COBRADOR  = {};
+COBRADORES.slice().sort().forEach(function(nombre, i) {
+  NUMERO_COBRADOR[nombre] = i + 1;
+  COLOR_COBRADOR[nombre]  = PALETA_COBRADORES[i % PALETA_COBRADORES.length];
+});
+
+// ── Icono de posición: bolita de color + número arriba ─────────────
+function iconoPosNumerado(color, numero) {
+  return L.divIcon({
+    className:'',
+    html:`
+      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">
+        <div style="background:#fff;border:1.5px solid ${color};border-radius:4px;padding:0 5px;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;color:${color};margin-bottom:2px;box-shadow:0 1px 4px rgba(0,0,0,0.25);white-space:nowrap;">${numero}</div>
+        <div style="width:15px;height:15px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 0 8px ${color};"></div>
+      </div>`,
+    iconSize:[30,36], iconAnchor:[15,36], popupAnchor:[0,-38]
+  });
+}
+
 // ── Reloj ─────────────────────────────────────────────────────────
 setInterval(()=>{ document.getElementById('clock-top').textContent=new Date().toLocaleTimeString('es-EC'); },1000);
 document.getElementById('clock-top').textContent=new Date().toLocaleTimeString('es-EC');
@@ -466,6 +493,12 @@ db.ref("cobradores").on("value", function(snap) {
 db.ref("historial").on("value", function(snap) {
   historialRec = snap.val() || {};
   if (recorridoActivo) mostrarRecorrido(recorridoActivo);
+  if (todosRecorridosActivo) {
+    for (var n in recorridoTodosLayers) { recorridoTodosLayers[n].forEach(l=>map.removeLayer(l)); }
+    recorridoTodosLayers = {};
+    todosRecorridosActivo = false;
+    toggleTodosRecorridos();
+  }
 });
 
 // ── Procesar posiciones actuales ──────────────────────────────────
@@ -491,7 +524,8 @@ function procesarDatos() {
     if (estado==='almuerzo')   almuerzo++;
     if (estado==='finalizado') finalizados++;
 
-    var icono = ICONOS_POS[estado]||ICONOS_POS.default;
+    var colorEstado = {trabajando:'#00e676', almuerzo:'#ff9100', finalizado:'#ff1744'}[estado] || '#3d5a7a';
+    var icono = iconoPosNumerado(colorEstado, NUMERO_COBRADOR[nombre]||'?');
     if (!marcadores[nombre]) {
       marcadores[nombre]=L.marker([lat,lon],{icon:icono,zIndexOffset:500}).addTo(map);
     } else {
@@ -671,6 +705,62 @@ function ocultarRecorrido(nombre) {
   if (recorridoActivo===nombre) recorridoActivo=null;
 }
 
+// ── Ver TODOS los recorridos a la vez, numerados por cobrador ─────
+function toggleTodosRecorridos() {
+  if (todosRecorridosActivo) { ocultarTodosRecorridos(); return; }
+  if (recorridoActivo) { ocultarRecorrido(recorridoActivo); renderLista(document.getElementById('search').value); }
+
+  var bordes = [], count = 0;
+  COBRADORES.slice().sort().forEach(function(nombre) {
+    var hist = historialRec[nombre];
+    if (!hist) return;
+    var puntos = [];
+    for (var ts in hist) {
+      var p = hist[ts];
+      if (p.latitud && p.longitud) puntos.push({ ts:parseInt(ts), lat:p.latitud, lon:p.longitud });
+    }
+    if (!puntos.length) return;
+    puntos.sort((a,b)=>a.ts-b.ts);
+
+    var color  = COLOR_COBRADOR[nombre]  || '#1a73e8';
+    var numero = NUMERO_COBRADOR[nombre] || '?';
+    var coords = puntos.map(p=>[p.lat,p.lon]);
+    var layers = [];
+
+    if (puntos.length >= 2) {
+      var poly = L.polyline(coords, { color:color, weight:3, opacity:0.75, lineJoin:'round', lineCap:'round' }).addTo(map);
+      layers.push(poly);
+    }
+    puntos.forEach(function(p) {
+      var mk = L.marker([p.lat,p.lon], { icon:iconoPosNumerado(color, numero), zIndexOffset:200 }).addTo(map);
+      mk.bindPopup(`
+        <div class="pu-name" style="color:${color};">#${numero} ${nombre}</div>
+        <div class="pu-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.lat).toFixed(6)}</span></div>
+        <div class="pu-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.lon).toFixed(6)}</span></div>
+      `);
+      layers.push(mk);
+      bordes.push([p.lat,p.lon]);
+    });
+    recorridoTodosLayers[nombre] = layers;
+    count++;
+  });
+
+  todosRecorridosActivo = true;
+  document.getElementById('btn-todos-rec').classList.add('active');
+  document.getElementById('btn-todos-rec').textContent = '🗺️ Ocultar Todos los Recorridos';
+  if (bordes.length) map.fitBounds(bordes, { padding:[50,50] });
+  showToast(count ? ('🗺️ Mostrando recorrido de '+count+' cobrador(es)') : '⚠ Sin historial de recorrido hoy');
+}
+
+function ocultarTodosRecorridos() {
+  for (var n in recorridoTodosLayers) { recorridoTodosLayers[n].forEach(l=>map.removeLayer(l)); }
+  recorridoTodosLayers = {};
+  todosRecorridosActivo = false;
+  document.getElementById('btn-todos-rec').classList.remove('active');
+  document.getElementById('btn-todos-rec').textContent = '🗺️ Ver Todos los Recorridos';
+  showToast('🗺️ Recorridos ocultados');
+}
+
 // ── Render lista sidebar ──────────────────────────────────────────
 function renderLista(filtro) {
   var container=document.getElementById('cobrador-list');
@@ -714,10 +804,12 @@ function renderLista(filtro) {
 
     var btnRec=gps?`<button class="btn-rec ${recorridoActivo===nombre?'on':''}" id="brec-${nombre.replace(/ /g,'_')}" onclick="toggleRec('${nombre.replace(/'/g,"\\'")}',event)">🗺 ${recorridoActivo===nombre?'Ocultar':'Ver Recorrido'}</button>`:'';
 
+    var numCob = NUMERO_COBRADOR[nombre] || '?';
+    var colorCob = COLOR_COBRADOR[nombre] || '#3d5a7a';
     var card=document.createElement('div');
     card.className=`cobrador-card ${gps?estado:'sin-gps'}`;
     card.innerHTML=`
-      <div class="c-name">${nombre}</div>
+      <div class="c-name"><span class="c-num" style="background:${colorCob};">${numCob}</span>${nombre}</div>
       <div class="c-meta">
         <span class="estado-pill pill-${gps?estado:'sin-gps'}">${gps?estado:'sin gps'}</span>
         <span class="c-hora">${hora}</span>
@@ -833,6 +925,12 @@ function borrarTodosLosDatos(){
   for(var nb in marcadoresPuntos){ for(var ev in marcadoresPuntos[nb]) map.removeLayer(marcadoresPuntos[nb][ev]); } marcadoresPuntos={};
   for(var na in marcadoresAlerta) map.removeLayer(marcadoresAlerta[na]); marcadoresAlerta={};
   for(var nr in recorridoLayers){ recorridoLayers[nr].forEach(l=>map.removeLayer(l)); } recorridoLayers={};
+  for(var nt in recorridoTodosLayers){ recorridoTodosLayers[nt].forEach(l=>map.removeLayer(l)); } recorridoTodosLayers={};
+  todosRecorridosActivo=false;
+  if (document.getElementById('btn-todos-rec')) {
+    document.getElementById('btn-todos-rec').classList.remove('active');
+    document.getElementById('btn-todos-rec').textContent = '🗺️ Ver Todos los Recorridos';
+  }
   recorridoActivo=null; datosCob={}; datosPuntos={}; historialRec={};
   ultimaPosicion={}; tiempoParado={}; horaParado={}; nivelAlerta={};
   ['cnt-activos','cnt-almuerzo','cnt-sin','cnt-finalizados'].forEach(id=>document.getElementById(id).textContent='0');
