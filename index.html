@@ -438,7 +438,13 @@
       var c = JSON.parse(localStorage.getItem('gps_puntos_cola')||'[]');
       if (!c.length) return;
       localStorage.removeItem('gps_puntos_cola');
-      c.forEach(item => db.ref('puntos/'+item.nombre+'/'+item.keyEvento).set(item.dato));
+      c.forEach(item => db.ref('puntos/'+item.nombre+'/'+item.keyEvento).set(item.dato).catch(() => {
+        try {
+          var c2 = JSON.parse(localStorage.getItem('gps_puntos_cola')||'[]');
+          c2.push(item);
+          localStorage.setItem('gps_puntos_cola', JSON.stringify(c2));
+        } catch(e) {}
+      }));
     } catch(e) {}
   }
 
@@ -527,6 +533,19 @@
   function pedirConfirmacion(accion) {
     var nombre = document.getElementById('nombre').value;
     if (!nombre) { showToast('⚠ Selecciona un cobrador primero'); return; }
+
+    // ── Validar secuencia correcta de acciones ───────────
+    var VALIDACION = {
+      inicioAlmuerzo:   { permitido:['trabajando'], msg:'⚠ Primero debes presionar "Iniciar GPS"' },
+      finAlmuerzo:      { permitido:['almuerzo'],    msg:'⚠ Primero debes presionar "Inicio Almuerzo"' },
+      finalizarRutaGPS: { permitido:['trabajando','almuerzo'], msg:'⚠ Primero debes presionar "Iniciar GPS"' }
+    };
+    var val = VALIDACION[accion];
+    if (val && val.permitido.indexOf(estadoActual) === -1) {
+      showToast(val.msg);
+      return;
+    }
+
     var cfg = ACCIONES_CFG[accion];
     document.getElementById('modalIcon').textContent   = cfg.icon;
     document.getElementById('modalAction').textContent = cfg.label;
@@ -560,14 +579,17 @@
     var ev = EVENTOS[tipoEvento]||{emoji:'📍',label:tipoEvento.toUpperCase()};
     var dato = { evento:tipoEvento, label:ev.label, hora, fecha };
     if (lat) { dato.latitud=lat; dato.longitud=lon; }
-    if (navigator.onLine) {
-      db.ref('puntos/'+nombre+'/'+tipoEvento).set(dato);
-    } else {
+    function encolarPunto() {
       try {
         var c = JSON.parse(localStorage.getItem('gps_puntos_cola')||'[]');
         c.push({ nombre, keyEvento:tipoEvento, dato });
         localStorage.setItem('gps_puntos_cola', JSON.stringify(c));
       } catch(e) {}
+    }
+    if (navigator.onLine) {
+      db.ref('puntos/'+nombre+'/'+tipoEvento).set(dato).catch(encolarPunto);
+    } else {
+      encolarPunto();
     }
   }
 
