@@ -612,10 +612,27 @@
   }
 
   // ── Función central: obtener GPS y guardar ────────────
+  // ── Obtener ubicación con reintento automático ────────
+  // 1er intento: alta precisión (GPS puro), hasta 15s
+  // 2do intento si falla: precisión reducida (red/WiFi), hasta 8s — mucho más rápido
+  function obtenerUbicacion(onSuccess, onError) {
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      function() {
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          onError,
+          { timeout:8000, maximumAge:30000, enableHighAccuracy:false }
+        );
+      },
+      { timeout:15000, maximumAge:0, enableHighAccuracy:true }
+    );
+  }
+
   function enviarGPS(estado, statusKey, tipoEvento, grabarHistorial) {
     var nombre = document.getElementById('nombre').value;
     setStatus(statusKey);
-    navigator.geolocation.getCurrentPosition(
+    obtenerUbicacion(
       function(pos) {
         var lat = pos.coords.latitude, lon = pos.coords.longitude;
         var hora = new Date().toLocaleTimeString('es-EC');
@@ -636,14 +653,14 @@
       function() {
         var hora = new Date().toLocaleTimeString('es-EC');
         var fecha = new Date().toLocaleDateString('es-EC');
+        showToast('⚠ No se pudo obtener tu ubicación GPS · verifica tu señal e inténtalo de nuevo');
         if (navigator.onLine) {
           db.ref('cobradores/'+nombre).update({estado,hora,fecha}).catch(()=>agregarACola(nombre,estado,null,null));
         } else {
           agregarACola(nombre, estado, null, null);
         }
         if (tipoEvento) guardarPunto(nombre, tipoEvento, null, null);
-      },
-      { timeout:10000, maximumAge:0, enableHighAccuracy:true }
+      }
     );
   }
 
